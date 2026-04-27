@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  @apply bg-ink-800 text-text font-sans antialiased overflow-hidden;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0, 229, 255, 0.12); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 229, 255, 0.25); }
+
+/* Selection */
+::selection { background: rgba(0, 229, 255, 0.3); color: white; }
+
+/* Reusable */
+@layer components {
+  .glass {
+    @apply bg-[rgba(18,24,42,0.65)] backdrop-blur-xl border border-[rgba(0,229,255,0.12)] shadow-card;
+  }
+  .glass-hover {
+    @apply hover:border-[rgba(0,229,255,0.3)] hover:shadow-glow transition-all duration-200;
+  }
+  .btn-primary {
+    @apply relative inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
+           font-medium text-sm tracking-wide text-ink-900
+           bg-accent-gradient shadow-glow
+           hover:shadow-glow-violet hover:-translate-y-[1px]
+           active:translate-y-0
+           transition-all duration-200
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:translate-y-0;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg
+           text-sm text-text-muted border border-[rgba(138,148,184,0.15)]
+           hover:text-text hover:border-[rgba(0,229,255,0.3)] hover:bg-[rgba(0,229,255,0.04)]
+           transition-all duration-200;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md
+           text-[11px] font-medium tracking-wide uppercase
+           bg-[rgba(0,229,255,0.08)] text-neon-cyan border border-[rgba(0,229,255,0.2)];
+  }
+  .field-label {
+    @apply block text-xs uppercase tracking-[0.14em] text-text-muted font-medium mb-2;
+  }
+  .input-base {
+    @apply w-full px-3.5 py-2.5 rounded-lg
+           bg-[rgba(7,11,20,0.6)] border border-[rgba(138,148,184,0.15)]
+           text-sm text-text placeholder:text-text-dim
+           focus:outline-none focus:border-[rgba(0,229,255,0.5)] focus:bg-[rgba(7,11,20,0.9)]
+           focus:shadow-[0_0_0_3px_rgba(0,229,255,0.08)]
+           transition-all duration-150;
+  }
+  .pill-tab {
+    @apply px-3 py-1.5 rounded-md text-xs font-medium
+           text-text-muted hover:text-text
+           transition-colors duration-150;
+  }
+  .pill-tab-active {
+    @apply text-neon-cyan bg-[rgba(0,229,255,0.08)];
+  }
+}
+
+/* Loading shimmer bar */
+.shimmer-bar {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(0, 229, 255, 0.35) 40%,
+    rgba(168, 85, 247, 0.35) 60%,
+    transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2.2s linear infinite;
+}

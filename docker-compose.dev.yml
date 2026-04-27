@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: seedlandv-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: seedlandv
+      POSTGRES_PASSWORD: seedlandv_dev
+      POSTGRES_DB: seedlandv
+    ports:
+      - "5432:5432"
+    volumes:
+      - seedlandv_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U seedlandv -d seedlandv"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: seedlandv-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # API 服务，profile=api 时启动（默认仅起基础设施，开发时通常 uvicorn 跑本地）
+  # docker compose -f docker-compose.dev.yml --profile api up
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.api
+    container_name: seedlandv-api
+    profiles: ["api"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://seedlandv:seedlandv_dev@postgres:5432/seedlandv
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      ARK_KEY_FERNET_SECRET: ${ARK_KEY_FERNET_SECRET}
+      VOLC_TOS_AK: ${VOLC_TOS_AK}
+      VOLC_TOS_SK: ${VOLC_TOS_SK}
+      VOLC_TOS_BUCKET: ${VOLC_TOS_BUCKET}
+      VOLC_TOS_REGION: ${VOLC_TOS_REGION:-cn-beijing}
+      VOLC_TOS_ENDPOINT: ${VOLC_TOS_ENDPOINT:-tos-cn-beijing.volces.com}
+    ports:
+      - "8000:8000"
+    command: ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+
+volumes:
+  seedlandv_pg:

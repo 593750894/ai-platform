@@ -1,0 +1,16 @@
+node_modules
+out
+dist
+dist-types
+.env
+*.log
+.DS_Store
+
+# Python / server
+server/.venv/
+server/**/__pycache__/
+server/**/*.egg-info/
+server/.pytest_cache/
+server/.ruff_cache/
+server/htmlcov/
+server/.coverage

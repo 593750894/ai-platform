@@ -1,0 +1,54 @@
+[project]
+name = "seedlandv-server"
+version = "0.1.0"
+description = "SeedLandV backend: FastAPI + Celery + Postgres + 火山 TOS"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "sqlalchemy[asyncio]>=2.0.36",
+  "alembic>=1.14",
+  "psycopg[binary,pool]>=3.2",
+  "celery[redis]>=5.4",
+  "redis>=5.2",
+  "httpx>=0.28",
+  "tos>=2.7",
+  "pydantic>=2.10",
+  "pydantic-settings>=2.6",
+  "python-jose[cryptography]>=3.3",
+  "passlib[argon2]>=1.7.4",
+  "python-multipart>=0.0.20",
+  "cryptography>=44.0",
+  "websockets>=14.1",
+  "gevent>=24.11; python_version < '3.13'",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.24",
+  "pytest-cov>=6.0",
+  "respx>=0.22",
+  "ruff>=0.8",
+  "httpx[cli]",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC"]
+ignore = ["E501"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
