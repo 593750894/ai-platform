@@ -7,6 +7,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import {
   CollaborationStatus,
   CollaborationType,
+  PostType,
   PrismaClient,
   Role,
   ToolPricing,
@@ -120,27 +121,34 @@ const TOOLS = [
   { slug: "luma-dream-machine", name: "Luma Dream Machine", category: "视频生成", url: "https://lumalabs.ai/dream-machine", pricing: ToolPricing.FREEMIUM, tags: ["视频"], official: false, desc: "Luma 旗下的视频生成模型。" },
 ] as const;
 
-const POST_TEMPLATES: Array<{ channel: string; title: string; content: string }> = [
-  { channel: "showcase", title: "首部 AI 短片《潮汐都市》上线", content: "用 Seedance 2.0 跑了 24 个镜头，3 天内出片，欢迎来吐槽。" },
-  { channel: "showcase", title: "霓虹雨夜街景测试", content: "1080p × 5s × 16:9，提示词放评论区。" },
-  { channel: "showcase", title: "Anime 风《樱花列车》",  content: "首尾帧控制 + Suno 配乐，长度 1:20。" },
-  { channel: "prompts", title: "我的万能起手 Prompt 模板", content: "结构：风格 / 场景 / 主体 / 镜头 / 灯光 / 色调，按这个顺序你试试。" },
-  { channel: "prompts", title: "如何用关键词控制摄影机推拉", content: "关键词清单 + 失败 case 对照。" },
-  { channel: "prompts", title: "中文 vs 英文提示词的实测差异", content: "同一场景两版输入跑 5 次取平均。" },
-  { channel: "seedance", title: "Seedance 2.0 vs Fast 出片对比", content: "成本、速度、细节三个维度的表格。" },
-  { channel: "seedance", title: "Ark API 限流避坑", content: "并发 > 4 会被节流，建议本地排队。" },
-  { channel: "first-last-frame", title: "首尾帧一定要保持一致颜色吗", content: "实测：色温差 200K 内基本不抖。" },
-  { channel: "anime", title: "和风线条的 LoRA 推荐", content: "三个我用得最顺的 LoRA。" },
-  { channel: "sci-fi", title: "赛博朋克城市镜头合集", content: "10 个镜头，分享给同好。" },
-  { channel: "sci-fi", title: "太空舱内部的光照难点", content: "实测让模型理解 'rim light' 真的有用。" },
-  { channel: "documentary", title: "用 AI 重建 1980s 上海街景", content: "档案照 → 首帧 → 多镜头生成。" },
-  { channel: "vfx-experiment", title: "用首尾帧做粒子转场", content: "效果意外的好，附 prompt。" },
-  { channel: "music-video", title: "Suno + Seedance 一条龙做 MV", content: "30 分钟出片的流水线分享。" },
-  { channel: "ads-creative", title: "电商 5 秒短视频流水线", content: "从产品图 → 图生 → 自动剪。" },
-  { channel: "tooling", title: "Ark API 批量提交脚本", content: "支持失败重试和指数退避，开源链接见正文。" },
-  { channel: "tooling", title: "Prompt 模板管理小工具", content: "类似 snippets，按标签调用。" },
-  { channel: "newbie", title: "新手必读：参数到底是啥意思", content: "分辨率 / 比例 / 时长 / 种子 一次讲清楚。" },
-  { channel: "newbie", title: "我跑出来的视频闪烁怎么办", content: "排查清单 + 5 个常见原因。" },
+const POST_TEMPLATES: Array<{
+  channel: string;
+  title: string;
+  content: string;
+  type: PostType;
+  videoUrl?: string;
+  imageUrl?: string;
+}> = [
+  { channel: "showcase", title: "首部 AI 短片《潮汐都市》上线", content: "用 Seedance 2.0 跑了 24 个镜头，3 天内出片，欢迎来吐槽。", type: PostType.SHOWCASE, videoUrl: "https://seedland.dev/sample/tide-city.mp4", imageUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=tide-city" },
+  { channel: "showcase", title: "霓虹雨夜街景测试", content: "1080p × 5s × 16:9，提示词放评论区。", type: PostType.SHOWCASE, videoUrl: "https://seedland.dev/sample/neon-rain.mp4" },
+  { channel: "showcase", title: "Anime 风《樱花列车》",  content: "首尾帧控制 + Suno 配乐，长度 1:20。", type: PostType.SHOWCASE, videoUrl: "https://seedland.dev/sample/sakura.mp4" },
+  { channel: "prompts", title: "我的万能起手 Prompt 模板", content: "结构：风格 / 场景 / 主体 / 镜头 / 灯光 / 色调，按这个顺序你试试。", type: PostType.TUTORIAL },
+  { channel: "prompts", title: "如何用关键词控制摄影机推拉", content: "关键词清单 + 失败 case 对照。", type: PostType.TUTORIAL, imageUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=camera-prompt" },
+  { channel: "prompts", title: "中文 vs 英文提示词的实测差异", content: "同一场景两版输入跑 5 次取平均。", type: PostType.DISCUSSION },
+  { channel: "seedance", title: "Seedance 2.0 vs Fast 出片对比", content: "成本、速度、细节三个维度的表格。", type: PostType.DISCUSSION, imageUrl: "https://api.dicebear.com/9.x/shapes/svg?seed=seedance-cmp" },
+  { channel: "seedance", title: "Ark API 限流避坑", content: "并发 > 4 会被节流，建议本地排队。", type: PostType.NEWS },
+  { channel: "first-last-frame", title: "首尾帧一定要保持一致颜色吗", content: "实测：色温差 200K 内基本不抖。", type: PostType.QUESTION },
+  { channel: "anime", title: "和风线条的 LoRA 推荐", content: "三个我用得最顺的 LoRA。", type: PostType.TOOL_RECOMMEND },
+  { channel: "sci-fi", title: "赛博朋克城市镜头合集", content: "10 个镜头，分享给同好。", type: PostType.SHOWCASE, videoUrl: "https://seedland.dev/sample/cyberpunk.mp4" },
+  { channel: "sci-fi", title: "太空舱内部的光照难点", content: "实测让模型理解 'rim light' 真的有用。", type: PostType.TUTORIAL },
+  { channel: "documentary", title: "用 AI 重建 1980s 上海街景", content: "档案照 → 首帧 → 多镜头生成。", type: PostType.SHOWCASE, videoUrl: "https://seedland.dev/sample/shanghai-1980.mp4" },
+  { channel: "vfx-experiment", title: "用首尾帧做粒子转场", content: "效果意外的好，附 prompt。", type: PostType.TUTORIAL, videoUrl: "https://seedland.dev/sample/particle.mp4" },
+  { channel: "music-video", title: "Suno + Seedance 一条龙做 MV", content: "30 分钟出片的流水线分享。", type: PostType.TUTORIAL },
+  { channel: "ads-creative", title: "电商 5 秒短视频流水线", content: "从产品图 → 图生 → 自动剪。", type: PostType.COLLABORATION },
+  { channel: "tooling", title: "Ark API 批量提交脚本", content: "支持失败重试和指数退避，开源链接见正文。", type: PostType.TOOL_RECOMMEND },
+  { channel: "tooling", title: "Prompt 模板管理小工具", content: "类似 snippets，按标签调用。", type: PostType.TOOL_RECOMMEND },
+  { channel: "newbie", title: "新手必读：参数到底是啥意思", content: "分辨率 / 比例 / 时长 / 种子 一次讲清楚。", type: PostType.TUTORIAL },
+  { channel: "newbie", title: "我跑出来的视频闪烁怎么办", content: "排查清单 + 5 个常见原因。", type: PostType.QUESTION },
 ];
 
 const WORKS = [
@@ -269,6 +277,9 @@ async function main() {
           authorId: users[i % users.length].id,
           title: p.title,
           content: p.content,
+          type: p.type,
+          videoUrl: p.videoUrl ?? null,
+          imageUrl: p.imageUrl ?? null,
           views: 50 + Math.floor(Math.random() * 1000),
           pinned: i === 0,
         },

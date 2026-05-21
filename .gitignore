@@ -5,6 +5,7 @@ dist-types
 .env
 *.log
 .DS_Store
+.tools/
 
 # Python / server
 server/.venv/

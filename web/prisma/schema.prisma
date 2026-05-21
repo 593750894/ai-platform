@@ -47,6 +47,16 @@ enum ToolPricing {
   PAID
 }
 
+enum PostType {
+  DISCUSSION   // 普通交流
+  SHOWCASE     // 作品展示
+  COLLABORATION // 项目合作
+  TOOL_RECOMMEND // 工具推荐
+  TUTORIAL     // 教程经验
+  QUESTION     // 提问求助
+  NEWS         // 行业资讯
+}
+
 // ───────────────────────────── User ─────────────────────────────
 
 model User {
@@ -126,6 +136,9 @@ model Post {
   authorId     String   @map("author_id")
   title        String
   content      String
+  type         PostType @default(DISCUSSION)
+  videoUrl     String?  @map("video_url")
+  imageUrl     String?  @map("image_url")
   views        Int      @default(0)
   likeCount    Int      @default(0) @map("like_count")
   commentCount Int      @default(0) @map("comment_count")
@@ -142,6 +155,7 @@ model Post {
 
   @@index([channelId, createdAt])
   @@index([authorId])
+  @@index([type])
   @@map("posts")
 }
 
