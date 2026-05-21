@@ -53,6 +53,34 @@ enum CollaborationStatus {
   CLOSED
 }
 
+enum CollaborationCategory {
+  AI_VIDEO_TEAM      // 找 AI 视频制作团队
+  AI_COMIC_CREATOR   // 找 AI 漫剧创作者
+  AI_DRAMA_TEAM      // 找 AI 短剧团队
+  DIGITAL_HUMAN      // 找数字人制作
+  PROMPT_ENGINEER    // 找提示词工程师
+  COMFYUI_WORKFLOW   // 找 ComfyUI 工作流搭建
+  EDITOR             // 找剪辑师
+  COFOUNDER          // 找联合创始人
+  INVEST_BIZ         // 找投资 / 商务合作
+  OTHER              // 其他
+}
+
+enum CollaborationWorkMode {
+  PROJECT    // 项目制
+  FULL_TIME  // 全职
+  PART_TIME  // 兼职
+  FREELANCE  // 外包
+  EQUITY     // 合伙 / 股权
+  ONE_OFF    // 一次性单子
+}
+
+enum CollaborationLocation {
+  REMOTE  // 远程
+  ONSITE  // 线下
+  HYBRID  // 远程 + 线下
+}
+
 enum ToolPricing {
   FREE
   FREEMIUM
@@ -229,20 +257,25 @@ model Work {
 // ───────────────────────────── Collaboration (合作需求) ─────────────────────────────
 
 model Collaboration {
-  id          String              @id @default(cuid())
-  authorId    String              @map("author_id")
+  id          String                @id @default(cuid())
+  authorId    String                @map("author_id")
   title       String
   description String
-  type        CollaborationType
-  status      CollaborationStatus @default(OPEN)
+  type        CollaborationType     @default(LOOKING_FOR)
+  category    CollaborationCategory @default(OTHER)
+  workMode    CollaborationWorkMode @default(PROJECT) @map("work_mode")
+  location    CollaborationLocation @default(REMOTE)
+  status      CollaborationStatus   @default(OPEN)
   budget      String?
+  contact     String?
   deadline    DateTime?
   tags        String[]
-  createdAt   DateTime            @default(now()) @map("created_at")
+  createdAt   DateTime              @default(now()) @map("created_at")
 
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
+  @@index([category])
   @@index([type])
   @@map("collaborations")
 }

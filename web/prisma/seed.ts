@@ -5,8 +5,11 @@ import bcrypt from "bcryptjs";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import {
+  CollaborationCategory,
+  CollaborationLocation,
   CollaborationStatus,
   CollaborationType,
+  CollaborationWorkMode,
   PostType,
   PrismaClient,
   Role,
@@ -170,14 +173,116 @@ const WORKS = [
 ] as const;
 
 const COLLABS = [
-  { title: "招一个会写 Prompt 的搭子", desc: "我擅长后期，缺一个 prompt 工程师，共做 1 分钟短片。", type: CollaborationType.LOOKING_FOR, budget: "分成", tags: ["短片", "Prompt"] },
-  { title: "提供 Seedance 2.0 渲染额度", desc: "我有 Ark 配额，可以帮你跑测试镜头，换你的创作素材。", type: CollaborationType.OFFERING, budget: "互换", tags: ["渲染额度", "Seedance"] },
-  { title: "招二次元美术合作", desc: "MV 项目，需要二次元角色设定 + 关键帧。", type: CollaborationType.LOOKING_FOR, budget: "3000-5000 元", tags: ["MV", "二次元"] },
-  { title: "纪录片项目找剪辑师", desc: "AI 重建上海 1980s，60 分钟成片。", type: CollaborationType.LOOKING_FOR, budget: "面议", tags: ["纪录片", "剪辑"] },
-  { title: "可提供 3D 建模 + 渲染", desc: "Blender / Tripo 都熟，能配合 AI 工作流。", type: CollaborationType.OFFERING, budget: "1500/分钟起", tags: ["3D", "Blender"] },
-  { title: "广告流水线搭建外包", desc: "需要一套从产品图到 5 秒视频的自动化脚本。", type: CollaborationType.LOOKING_FOR, budget: "20000 元", tags: ["广告", "自动化"] },
-  { title: "我可以接 MV 项目", desc: "Seedance 重度用户，1-2 周交付。", type: CollaborationType.OFFERING, budget: "10000/分钟起", tags: ["MV"] },
-  { title: "实验影像作者寻投稿合作", desc: "做实验短片，想和发行/影展对接。", type: CollaborationType.LOOKING_FOR, budget: "无", tags: ["实验影像", "影展"] },
+  {
+    title: "招一个会写 Prompt 的搭子，共做 1 分钟短片",
+    desc: "我擅长后期合成，正在做一支 1 分钟的赛博风格短片，缺一个能稳出 prompt 的小伙伴。交付物：30 段 5 秒镜头 + prompt 文档。可以分成。",
+    type: CollaborationType.LOOKING_FOR,
+    category: CollaborationCategory.PROMPT_ENGINEER,
+    workMode: CollaborationWorkMode.PROJECT,
+    location: CollaborationLocation.REMOTE,
+    budget: "成片后分成 30%",
+    contact: "微信: prompt_partner_01",
+    tags: ["短片", "Prompt", "Seedance 2.0"],
+  },
+  {
+    title: "AI 短剧《潮汐》第二季招团队，预计 12 集",
+    desc: "竖屏微短剧，悬疑题材，已有完整剧本和分镜，需要：AI 视觉师 × 2、剪辑 × 1、配音 × 1。3 个月交付，按集结算。",
+    type: CollaborationType.LOOKING_FOR,
+    category: CollaborationCategory.AI_DRAMA_TEAM,
+    workMode: CollaborationWorkMode.PROJECT,
+    location: CollaborationLocation.HYBRID,
+    budget: "¥18-30k / 集",
+    contact: "邮箱: hello@yehang.studio",
+    tags: ["短剧", "竖屏", "Seedance 2.0", "长期"],
+  },
+  {
+    title: "找 AI 漫剧创作者，长期合作做平台原创",
+    desc: "我们是一家漫剧厂牌，急需擅长分镜叙事、能稳定输出每周 1-2 话节奏的创作者。提供 IP 和编剧支持，作者负责画面落地。",
+    type: CollaborationType.LOOKING_FOR,
+    category: CollaborationCategory.AI_COMIC_CREATOR,
+    workMode: CollaborationWorkMode.PART_TIME,
+    location: CollaborationLocation.REMOTE,
+    budget: "¥3-8k / 话 + 流量分成",
+    contact: "微信: comic_studio_x",
+    tags: ["漫剧", "分镜", "长期"],
+  },
+  {
+    title: "电商品牌找数字人主播，30 秒口播模板",
+    desc: "电商客户需要 1 个数字人形象 + 30 秒口播模板，可批量复用换文案。要求形象自然、表情流畅。",
+    type: CollaborationType.LOOKING_FOR,
+    category: CollaborationCategory.DIGITAL_HUMAN,
+    workMode: CollaborationWorkMode.ONE_OFF,
+    location: CollaborationLocation.REMOTE,
+    budget: "¥8000-15000",
+    contact: "联系: zhang@ecombrand.com",
+    tags: ["数字人", "电商", "口播"],
+  },
+  {
+    title: "纪录片项目找剪辑师，60 分钟成片",
+    desc: "AI 重建 1980s 上海街景，已完成 80% 镜头生成。需要资深剪辑师做整体节奏 + 字幕 + 调色。",
+    type: CollaborationType.LOOKING_FOR,
+    category: CollaborationCategory.EDITOR,
+    workMode: CollaborationWorkMode.PROJECT,
+    location: CollaborationLocation.REMOTE,
+    budget: "¥25000 项目费",
+    contact: "微信: doc_voyager_v",
+    tags: ["纪录片", "剪辑", "调色"],
+  },
+  {
+    title: "需要 ComfyUI 工程师搭建产品图 → 视频流水线",
+    desc: "电商团队，每天有 50+ 产品图需要自动转 5 秒短视频。希望搭建 ComfyUI 工作流：产品图 → 抠图 → 首尾帧 → Seedance Fast。",
+    type: CollaborationType.LOOKING_FOR,
+    category: CollaborationCategory.COMFYUI_WORKFLOW,
+    workMode: CollaborationWorkMode.FREELANCE,
+    location: CollaborationLocation.REMOTE,
+    budget: "¥20000 一次性 + 后续维护",
+    contact: "邮箱: ops@brand-lab.cn",
+    tags: ["ComfyUI", "电商", "自动化"],
+  },
+  {
+    title: "AI 视频厂牌招联合创始人，技术 / 内容方向",
+    desc: "团队 3 人，已有种子轮意向。寻找一位深度玩过 AI 视频工作流（Seedance / Runway / ComfyUI）的联合创始人，技术或内容方向均可。",
+    type: CollaborationType.LOOKING_FOR,
+    category: CollaborationCategory.COFOUNDER,
+    workMode: CollaborationWorkMode.EQUITY,
+    location: CollaborationLocation.HYBRID,
+    budget: "股权 + 基本工资",
+    contact: "微信: cofounder_seek_2026",
+    tags: ["联合创始人", "股权", "厂牌"],
+  },
+  {
+    title: "AI 短剧厂牌寻投资 / 渠道合作",
+    desc: "团队已交付 24 集竖屏短剧，月产能 8 集，找投资方或渠道方一起做内容矩阵。可分发抖音 / 快手 / 海外。",
+    type: CollaborationType.LOOKING_FOR,
+    category: CollaborationCategory.INVEST_BIZ,
+    workMode: CollaborationWorkMode.PROJECT,
+    location: CollaborationLocation.HYBRID,
+    budget: "面议",
+    contact: "BD: bd@drama-brand.cn",
+    tags: ["投资", "短剧", "分发"],
+  },
+  {
+    title: "MV 项目招 AI 视频制作团队",
+    desc: "独立乐队，单曲 3 分 20 秒，希望做一支 AI 风格 MV。已有 demo 和参考片，可面议风格细节。",
+    type: CollaborationType.LOOKING_FOR,
+    category: CollaborationCategory.AI_VIDEO_TEAM,
+    workMode: CollaborationWorkMode.ONE_OFF,
+    location: CollaborationLocation.REMOTE,
+    budget: "¥12000-18000",
+    contact: "微信: lighthouse_band",
+    tags: ["MV", "音乐", "AI 视频"],
+  },
+  {
+    title: "提供 Seedance 2.0 + ComfyUI 工作流服务",
+    desc: "5 年视频经验，独立完成过 6 支商业短片，可承接 1-2 周交付的 MV / 广告 / 创意短片。",
+    type: CollaborationType.OFFERING,
+    category: CollaborationCategory.AI_VIDEO_TEAM,
+    workMode: CollaborationWorkMode.FREELANCE,
+    location: CollaborationLocation.REMOTE,
+    budget: "¥10000 / 分钟起",
+    contact: "微信: mv_freelancer",
+    tags: ["MV", "广告", "Seedance"],
+  },
 ] as const;
 
 async function main() {
@@ -345,19 +450,30 @@ async function main() {
 
   console.log("→ 写入 collaborations…");
   const collabs = await Promise.all(
-    COLLABS.map((c, i) =>
-      prisma.collaboration.create({
+    COLLABS.map((c, i) => {
+      // 给最后两条留出 IN_PROGRESS / CLOSED 状态，其余全部 OPEN
+      const status =
+        i === COLLABS.length - 1
+          ? CollaborationStatus.CLOSED
+          : i === COLLABS.length - 2
+            ? CollaborationStatus.IN_PROGRESS
+            : CollaborationStatus.OPEN;
+      return prisma.collaboration.create({
         data: {
           authorId: users[i % users.length].id,
           title: c.title,
           description: c.desc,
           type: c.type,
-          status: i === COLLABS.length - 1 ? CollaborationStatus.CLOSED : CollaborationStatus.OPEN,
+          category: c.category,
+          workMode: c.workMode,
+          location: c.location,
+          status,
           budget: c.budget,
+          contact: c.contact,
           tags: [...c.tags],
         },
-      })
-    )
+      });
+    })
   );
   console.log(`   ✓ ${collabs.length} collaborations`);
 

@@ -3,154 +3,190 @@ import {
   Banknote,
   Briefcase,
   Clock,
-  MapPin,
+  Filter,
+  Handshake,
   Plus,
   ShieldCheck,
   UserPlus,
-  Users,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import {
+  CollaborationCard,
+  type CollabCardItem,
+} from "@/components/feed/collaboration-card";
+import { prisma } from "@/lib/db";
+import { cn } from "@/lib/utils";
+import {
+  COLLAB_CATEGORY_ORDER,
+  COLLAB_STATUS_LABEL,
+  COLLAB_STATUS_TONE,
+  COLLAB_STATUS_VALUES,
+  collabCategoryMeta,
+  type CollabCategoryValue,
+  type CollabLocationValue,
+  type CollabStatusValue,
+  type CollabWorkModeValue,
+} from "@/lib/collaborations/categories";
+import type {
+  CollaborationCategory,
+  CollaborationStatus,
+} from "@/generated/prisma/client";
 
-type Project = {
-  id: string;
-  title: string;
-  org: string;
-  orgTint: string;
-  budget: string;
-  duration: string;
-  location: string;
-  roles: string[];
-  tags: string[];
-  verified?: boolean;
-  status: "招募中" | "急招" | "面试中";
-};
+export const dynamic = "force-dynamic";
 
-const PROJECTS: Project[] = [
-  {
-    id: "p001",
-    title: "AI 短剧《潮汐》第二季 · 12 集",
-    org: "夜航 Studio",
-    orgTint: "from-indigo-300 to-purple-500",
-    budget: "¥18-30 / 集",
-    duration: "3 个月",
-    location: "远程 · 可上海打卡",
-    roles: ["AI 合成师 × 2", "分镜导演 × 1", "后期调色 × 1"],
-    tags: ["Seedance 2.0", "短剧", "长期"],
-    verified: true,
-    status: "急招",
-  },
-  {
-    id: "p002",
-    title: "电商品牌 618 系列广告 · 6 支短视频",
-    org: "落日工作室",
-    orgTint: "from-rose-300 to-red-500",
-    budget: "¥8000 / 支",
-    duration: "2 周",
-    location: "全远程",
-    roles: ["创意编剧 × 1", "AI 视频生成师 × 2"],
-    tags: ["广告", "1:1", "9:16", "短期"],
-    verified: true,
-    status: "招募中",
-  },
-  {
-    id: "p003",
-    title: "独立游戏 CG 开场动画（约 90s）",
-    org: "Pixel·林",
-    orgTint: "from-fuchsia-300 to-purple-500",
-    budget: "¥25,000 一次性",
-    duration: "1 个月",
-    location: "远程",
-    roles: ["美术导演 × 1", "AI 角色生成师 × 1"],
-    tags: ["游戏 CG", "数字人", "16:9"],
-    status: "面试中",
-  },
-  {
-    id: "p004",
-    title: "MV 制作：独立乐队《灯塔》单曲",
-    org: "MidnightAI",
-    orgTint: "from-cyan-300 to-blue-500",
-    budget: "¥12,000-18,000",
-    duration: "3 周",
-    location: "远程",
-    roles: ["导演 × 1", "AI 视觉 × 2", "剪辑 × 1"],
-    tags: ["MV", "Seedance 2.0", "可灵 2.0"],
-    verified: true,
-    status: "招募中",
-  },
-  {
-    id: "p005",
-    title: "企业宣传片：3 分钟科技公司 brand video",
-    org: "Cube Studio",
-    orgTint: "from-slate-300 to-zinc-500",
-    budget: "¥35,000",
-    duration: "1 个月",
-    location: "北京 / 远程结合",
-    roles: ["制片 × 1", "AI 视觉 × 2", "音效 × 1"],
-    tags: ["品牌", "16:9", "中等周期"],
-    status: "招募中",
-  },
-  {
-    id: "p006",
-    title: "纪录短片：非遗匠人系列 · 第一辑",
-    org: "Film·北",
-    orgTint: "from-yellow-300 to-orange-500",
-    budget: "¥50,000 项目费",
-    duration: "2 个月",
-    location: "成都 / 重庆 + 远程",
-    roles: ["编剧 × 1", "AI 视觉重建 × 2", "音乐 × 1"],
-    tags: ["纪录片", "Seedance 2.0", "长期"],
-    verified: true,
-    status: "招募中",
-  },
-];
+type SearchParams = Promise<{ category?: string; status?: string }>;
 
-const TALENTS = [
-  { name: "陈卷卷", role: "AI 视频导演", skills: ["Seedance", "短剧", "分镜"], price: "¥2k-5k / 天", tint: "from-amber-300 to-orange-500" },
-  { name: "MidnightAI", role: "视觉特效师", skills: ["合成", "调色", "ComfyUI"], price: "¥1.5k-3k / 天", tint: "from-cyan-300 to-blue-500" },
-  { name: "Pixel·林", role: "角色 / 数字人", skills: ["LoRA 训练", "rigging"], price: "¥3k-6k / 天", tint: "from-fuchsia-300 to-purple-500" },
-];
+async function getCollaborations(
+  category: CollabCategoryValue | null,
+  status: CollabStatusValue | null,
+) {
+  return prisma.collaboration.findMany({
+    where: {
+      ...(category ? { category: category as CollaborationCategory } : {}),
+      ...(status ? { status: status as CollaborationStatus } : {}),
+    },
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          avatar: true,
+          industryRole: true,
+        },
+      },
+    },
+    take: 80,
+  });
+}
 
-const STATUS_TONE: Record<Project["status"], string> = {
-  招募中: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-  急招: "bg-rose-500/15 text-rose-300 border-rose-500/30",
-  面试中: "bg-amber-500/15 text-amber-300 border-amber-500/30",
-};
+async function getCategoryCounts(): Promise<Record<string, number>> {
+  const rows = await prisma.collaboration.groupBy({
+    by: ["category"],
+    _count: { _all: true },
+  });
+  const result: Record<string, number> = {};
+  for (const row of rows) result[row.category] = row._count._all;
+  return result;
+}
 
-export default function CollaborationPage() {
+async function getStats() {
+  const [openCount, totalCount, weekCount] = await Promise.all([
+    prisma.collaboration.count({ where: { status: "OPEN" } }),
+    prisma.collaboration.count(),
+    prisma.collaboration.count({
+      where: {
+        createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      },
+    }),
+  ]);
+  const creatorCount = await prisma.user.count();
+  return { openCount, totalCount, weekCount, creatorCount };
+}
+
+export default async function CollaborationPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const { category: rawCategory, status: rawStatus } = await searchParams;
+  const activeCategory =
+    rawCategory && (COLLAB_CATEGORY_ORDER as string[]).includes(rawCategory)
+      ? (rawCategory as CollabCategoryValue)
+      : null;
+  const activeStatus =
+    rawStatus && (COLLAB_STATUS_VALUES as readonly string[]).includes(rawStatus)
+      ? (rawStatus as CollabStatusValue)
+      : null;
+
+  const [rows, counts, stats] = await Promise.all([
+    getCollaborations(activeCategory, activeStatus),
+    getCategoryCounts(),
+    getStats(),
+  ]);
+
+  const items: CollabCardItem[] = rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    description: r.description,
+    category: r.category as CollabCategoryValue,
+    workMode: r.workMode as CollabWorkModeValue,
+    location: r.location as CollabLocationValue,
+    status: r.status as CollabStatusValue,
+    budget: r.budget,
+    tags: r.tags,
+    createdAt: r.createdAt,
+    author: r.author,
+  }));
+
+  const totalForCategory = activeCategory
+    ? counts[activeCategory] ?? 0
+    : stats.totalCount;
+
+  const queryWithStatus = (status: CollabStatusValue | null) => {
+    const params = new URLSearchParams();
+    if (activeCategory) params.set("category", activeCategory);
+    if (status) params.set("status", status);
+    const s = params.toString();
+    return s ? `/collaboration?${s}` : "/collaboration";
+  };
+
+  const queryWithCategory = (cat: CollabCategoryValue | null) => {
+    const params = new URLSearchParams();
+    if (cat) params.set("category", cat);
+    if (activeStatus) params.set("status", activeStatus);
+    const s = params.toString();
+    return s ? `/collaboration?${s}` : "/collaboration";
+  };
+
   return (
     <div className="flex flex-1 flex-col">
       <PageHeader
         eyebrow="项目合作"
-        title="Collaboration"
-        description="发布项目需求、组队接单、寻找认证创作者。所有交付走平台托管，结算自动分账。"
+        title="Collaboration · 找团队 · 接项目"
+        description="发布合作需求、组队接单、找认证创作者。从 AI 短剧到数字人、从 ComfyUI 搭建到联合创始人。"
         actions={
           <>
-            <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/collaboration/talents" />}>
-              <Users className="size-3.5" />
-              人才库
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              render={<Link href="/showcase" />}
+            >
+              <Handshake className="size-3.5" />
+              看作品库
             </Button>
-            <Button size="sm" nativeButton={false} render={<Link href="/collaboration/new" />}>
+            <Button
+              size="sm"
+              nativeButton={false}
+              render={<Link href="/collaboration/new" />}
+            >
               <Plus className="size-3.5" />
-              发布项目
+              发布合作
             </Button>
           </>
         }
       />
 
-      <div className="space-y-6 px-6 py-6 sm:px-8">
+      <div className="space-y-5 px-6 py-6 sm:px-8">
+        {/* 顶部统计 */}
         <section className="grid gap-3 sm:grid-cols-4">
           {[
-            { label: "在招项目", value: "186", icon: Briefcase },
-            { label: "认证创作者", value: "2,847", icon: UserPlus },
-            { label: "本月成交", value: "¥412 万", icon: Banknote },
-            { label: "平均回应", value: "< 4h", icon: Clock },
+            { label: "开放中需求", value: stats.openCount, icon: Briefcase, tone: "text-emerald-300" },
+            { label: "本周新发布", value: stats.weekCount, icon: Clock, tone: "text-cyan-300" },
+            { label: "累计合作", value: stats.totalCount, icon: Handshake, tone: "text-fuchsia-300" },
+            { label: "平台创作者", value: stats.creatorCount, icon: UserPlus, tone: "text-amber-300" },
           ].map((s) => {
             const Icon = s.icon;
             return (
-              <div key={s.label} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/40 p-4">
-                <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div
+                key={s.label}
+                className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/40 p-4"
+              >
+                <span className={cn("flex size-9 items-center justify-center rounded-lg bg-primary/10", s.tone)}>
                   <Icon className="size-4" />
                 </span>
                 <div>
@@ -162,125 +198,194 @@ export default function CollaborationPage() {
           })}
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[1fr_320px]">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold tracking-tight">最新项目</h2>
-              <div className="flex gap-1 text-xs">
-                {["全部", "短剧", "广告", "MV", "游戏 CG", "纪录"].map((t, i) => (
-                  <button
-                    key={t}
-                    className={`rounded-md px-2 py-1 transition-colors ${
-                      i === 0 ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {PROJECTS.map((p) => (
-                <article
-                  key={p.id}
-                  className="group rounded-xl border border-border/60 bg-card/40 p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card/70"
-                >
-                  <div className="flex items-start gap-4">
-                    <span
-                      className={`flex size-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-sm font-semibold text-black/70 ${p.orgTint}`}
-                    >
-                      {p.org.slice(0, 1)}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="line-clamp-1 text-sm font-medium group-hover:text-primary">{p.title}</h3>
-                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${STATUS_TONE[p.status]}`}>
-                          {p.status}
-                        </span>
-                      </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                        <span className="inline-flex items-center gap-1">
-                          {p.org}
-                          {p.verified && <ShieldCheck className="size-3 text-cyan-400" />}
-                        </span>
-                        <Sep />
-                        <span className="inline-flex items-center gap-1"><Banknote className="size-3" />{p.budget}</span>
-                        <Sep />
-                        <span className="inline-flex items-center gap-1"><Clock className="size-3" />{p.duration}</span>
-                        <Sep />
-                        <span className="inline-flex items-center gap-1"><MapPin className="size-3" />{p.location}</span>
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {p.roles.map((r) => (
-                          <span key={r} className="rounded-md border border-border/60 bg-muted/30 px-2 py-0.5 text-[11px]">
-                            {r}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex flex-wrap gap-1">
-                          {p.tags.map((t) => (
-                            <span key={t} className="rounded-full bg-muted/40 px-2 py-0.5 text-[10px] text-muted-foreground">
-                              #{t}
-                            </span>
-                          ))}
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">收藏</Button>
-                          <Button size="sm" nativeButton={false} render={<Link href={`/collaboration/${p.id}`} />}>
-                            投递
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+        {/* 分类筛选 */}
+        <section className="rounded-xl border border-border/60 bg-card/40 p-4">
+          <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <Filter className="size-3.5" />
+            合作类型
+            <span className="text-muted-foreground/60">
+              · 共 {stats.totalCount} 个合作机会
+            </span>
           </div>
-
-          <div>
-            <h2 className="mb-3 text-base font-semibold tracking-tight">推荐人才</h2>
-            <div className="space-y-3">
-              {TALENTS.map((t) => (
-                <div key={t.name} className="rounded-xl border border-border/60 bg-card/40 p-4">
-                  <div className="flex items-center gap-3">
-                    <span className={`flex size-10 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold text-black/70 ${t.tint}`}>
-                      {t.name.slice(0, 1)}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium">{t.name}</div>
-                      <div className="text-[11px] text-muted-foreground">{t.role}</div>
-                    </div>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {t.skills.map((s) => (
-                      <span key={s} className="rounded-md bg-muted/40 px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-[11px] text-muted-foreground">{t.price}</span>
-                    <Button size="xs" variant="outline">邀请</Button>
-                  </div>
-                </div>
-              ))}
-              <Link
-                href="/collaboration/talents"
-                className="block rounded-xl border border-dashed border-border/60 p-4 text-center text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-              >
-                查看全部 2,847 位创作者 →
-              </Link>
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <CategoryChip
+              href={queryWithCategory(null)}
+              active={!activeCategory}
+              label="全部"
+              emoji="🌐"
+              count={stats.totalCount}
+              tone="bg-primary/15 text-primary border-primary/30"
+            />
+            {COLLAB_CATEGORY_ORDER.map((c) => {
+              const meta = collabCategoryMeta(c);
+              return (
+                <CategoryChip
+                  key={c}
+                  href={queryWithCategory(c)}
+                  active={activeCategory === c}
+                  label={meta.label}
+                  emoji={meta.emoji}
+                  count={counts[c] ?? 0}
+                  tone={meta.tone}
+                />
+              );
+            })}
           </div>
+        </section>
+
+        {/* 状态过滤 + 排序 */}
+        <section className="flex flex-wrap items-center justify-between gap-3">
+          <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+            <ShieldCheck className="size-4 text-primary" />
+            {activeCategory ? (
+              <>
+                筛选：
+                <span className="font-medium text-foreground">
+                  {collabCategoryMeta(activeCategory).label}
+                </span>
+                <span className="text-muted-foreground/60">
+                  · {totalForCategory} 个机会
+                </span>
+              </>
+            ) : (
+              <>
+                按状态排序 ·{" "}
+                <span className="font-medium text-foreground">{items.length}</span>{" "}
+                条合作信息
+              </>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1.5 text-xs">
+            <StatusChip href={queryWithStatus(null)} active={!activeStatus} label="全部状态" tone="bg-muted/50 text-foreground" />
+            {COLLAB_STATUS_VALUES.map((s) => (
+              <StatusChip
+                key={s}
+                href={queryWithStatus(s)}
+                active={activeStatus === s}
+                label={COLLAB_STATUS_LABEL[s]}
+                tone={COLLAB_STATUS_TONE[s]}
+              />
+            ))}
+          </div>
+        </section>
+
+        {items.length === 0 ? (
+          <EmptyState hasFilter={!!(activeCategory || activeStatus)} />
+        ) : (
+          <section className="grid gap-3 lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+            {items.map((item) => (
+              <CollaborationCard key={item.id} item={item} />
+            ))}
+          </section>
+        )}
+
+        {/* 提示 / 引导 */}
+        <section className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-5 text-center">
+          <p className="text-sm text-muted-foreground">
+            没有找到合适的合作？
+            <Link
+              href="/collaboration/new"
+              className="ml-1 inline-flex items-center gap-1 font-medium text-primary hover:underline"
+            >
+              <Banknote className="size-3.5" />
+              直接发布你的需求
+            </Link>
+          </p>
         </section>
       </div>
     </div>
   );
 }
 
-function Sep() {
-  return <span className="text-muted-foreground/40">·</span>;
+function CategoryChip({
+  href,
+  active,
+  label,
+  emoji,
+  count,
+  tone,
+}: {
+  href: string;
+  active: boolean;
+  label: string;
+  emoji: string;
+  count: number;
+  tone: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors",
+        active
+          ? `${tone} ring-1 ring-primary/40`
+          : "border-border/60 bg-card/40 text-muted-foreground hover:border-primary/30 hover:text-foreground",
+      )}
+    >
+      <span aria-hidden>{emoji}</span>
+      <span>{label}</span>
+      <span
+        className={cn(
+          "rounded-full px-1.5 text-[10px] tabular-nums",
+          active ? "bg-white/10" : "bg-muted/60",
+        )}
+      >
+        {count}
+      </span>
+    </Link>
+  );
+}
+
+function StatusChip({
+  href,
+  active,
+  label,
+  tone,
+}: {
+  href: string;
+  active: boolean;
+  label: string;
+  tone: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "inline-flex items-center rounded-md border px-2.5 py-1 transition-colors",
+        active
+          ? `${tone} border-current/40 ring-1 ring-primary/20`
+          : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {label}
+    </Link>
+  );
+}
+
+function EmptyState({ hasFilter }: { hasFilter: boolean }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-10 text-center">
+      <p className="text-sm text-muted-foreground">
+        {hasFilter
+          ? "当前筛选条件下还没有合作需求。换一个分类，或者第一个发布吧。"
+          : "合作板块还没有任何需求，欢迎发布第一条。"}
+      </p>
+      <div className="mt-4 inline-flex gap-2">
+        {hasFilter && (
+          <Button
+            variant="outline"
+            size="sm"
+            nativeButton={false}
+            render={<Link href="/collaboration" />}
+          >
+            清除筛选
+          </Button>
+        )}
+        <Button size="sm" nativeButton={false} render={<Link href="/collaboration/new" />}>
+          <Plus className="size-3.5" />
+          发布合作
+        </Button>
+      </div>
+    </div>
+  );
 }
