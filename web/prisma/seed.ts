@@ -1,0 +1,444 @@
+import "dotenv/config";
+
+import bcrypt from "bcryptjs";
+
+import { PrismaPg } from "@prisma/adapter-pg";
+
+import {
+  CollaborationStatus,
+  CollaborationType,
+  PrismaClient,
+  Role,
+  ToolPricing,
+  WorkMode,
+  WorkModel,
+} from "../src/generated/prisma/client";
+
+const url = process.env.DATABASE_URL;
+if (!url) {
+  console.error("DATABASE_URL is not set. Add it to web/.env first.");
+  process.exit(1);
+}
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: url }),
+});
+
+// 与 src/lib/auth/password.ts 保持一致：bcrypt 加盐哈希
+async function hashPassword(plain: string): Promise<string> {
+  return bcrypt.hash(plain, 12);
+}
+
+const USERS = [
+  {
+    username: "neon_director",
+    email: "neo@seedland.dev",
+    name: "霓虹导演",
+    bio: "AI 短片爱好者 · Seedance 2.0 重度用户",
+    role: Role.ADMIN,
+  },
+  {
+    username: "pixel_poet",
+    email: "pixel@seedland.dev",
+    name: "像素诗人",
+    bio: "写诗的人，让模型负责画面。",
+    role: Role.MOD,
+  },
+  {
+    username: "rui_film",
+    email: "rui@seedland.dev",
+    name: "锐 · Film",
+    bio: "独立电影人，正在用 AI 拍我的第一部长片。",
+    role: Role.USER,
+  },
+  {
+    username: "studio_lumen",
+    email: "lumen@seedland.dev",
+    name: "Lumen Studio",
+    bio: "广告创意 → AI 视频流水线。",
+    role: Role.USER,
+  },
+  {
+    username: "mei_anim",
+    email: "mei@seedland.dev",
+    name: "美图 · Anim",
+    bio: "二次元 / Anime 风格专研。",
+    role: Role.USER,
+  },
+  {
+    username: "scifi_atelier",
+    email: "scifi@seedland.dev",
+    name: "Sci-Fi 工作室",
+    bio: "硬科幻视觉，长期招合作。",
+    role: Role.USER,
+  },
+  {
+    username: "doc_voyager",
+    email: "voyager@seedland.dev",
+    name: "纪录漫游者",
+    bio: "纪录片视角的 AI 重建。",
+    role: Role.USER,
+  },
+  {
+    username: "vfx_inkwell",
+    email: "inkwell@seedland.dev",
+    name: "墨井 VFX",
+    bio: "水墨 · 抽象 · 实验影像。",
+    role: Role.USER,
+  },
+] as const;
+
+const CHANNELS = [
+  { slug: "showcase", name: "作品秀场", description: "晒你的 AI 视频作品", icon: "🎬", color: "#22d3ee" },
+  { slug: "prompts", name: "Prompt 工坊", description: "提示词分享 & 互评", icon: "✨", color: "#a78bfa" },
+  { slug: "seedance", name: "Seedance 2.0", description: "官方模型讨论", icon: "🌱", color: "#34d399" },
+  { slug: "first-last-frame", name: "首尾帧实验", description: "首/尾帧控制运镜", icon: "🎞️", color: "#fb923c" },
+  { slug: "anime", name: "Anime 频道", description: "二次元风格美学", icon: "🌸", color: "#f472b6" },
+  { slug: "sci-fi", name: "Sci-Fi 频道", description: "赛博 / 太空 / 未来", icon: "🛸", color: "#60a5fa" },
+  { slug: "documentary", name: "纪录视角", description: "真实感与历史重建", icon: "📜", color: "#fbbf24" },
+  { slug: "vfx-experiment", name: "VFX 实验室", description: "特效 · 合成 · 后期", icon: "🧪", color: "#10b981" },
+  { slug: "music-video", name: "MV 创作", description: "音乐与画面的同步", icon: "🎵", color: "#f43f5e" },
+  { slug: "ads-creative", name: "广告创意", description: "商业短片与广告流水线", icon: "📺", color: "#facc15" },
+  { slug: "tooling", name: "工具与流水线", description: "提效脚本 / 自动化 / API", icon: "🛠️", color: "#94a3b8" },
+  { slug: "newbie", name: "新手入门", description: "踩坑、提问、互助", icon: "🌱", color: "#86efac" },
+] as const;
+
+const TOOLS = [
+  { slug: "seedance-2-0", name: "Seedance 2.0", category: "视频生成", url: "https://www.volcengine.com/product/seedance", pricing: ToolPricing.PAID, tags: ["视频", "火山方舟"], official: true, desc: "火山方舟出品的高质量视频生成模型，支持文生/图生/首尾帧/多模态参考。" },
+  { slug: "seedance-fast", name: "Seedance Fast", category: "视频生成", url: "https://www.volcengine.com/product/seedance", pricing: ToolPricing.PAID, tags: ["视频", "快"], official: true, desc: "Seedance 系列轻量版，速度优先。" },
+  { slug: "runway-gen3", name: "Runway Gen-3", category: "视频生成", url: "https://runwayml.com", pricing: ToolPricing.FREEMIUM, tags: ["视频"], official: false, desc: "Runway 的旗舰生成模型，电影化运镜出彩。" },
+  { slug: "kling", name: "Kling AI", category: "视频生成", url: "https://klingai.com", pricing: ToolPricing.FREEMIUM, tags: ["视频"], official: false, desc: "可灵 AI，物理一致性表现不错。" },
+  { slug: "veo3", name: "Veo 3", category: "视频生成", url: "https://deepmind.google/technologies/veo/", pricing: ToolPricing.PAID, tags: ["视频", "Google"], official: false, desc: "Google DeepMind 的高保真视频模型。" },
+  { slug: "midjourney", name: "Midjourney", category: "图像生成", url: "https://midjourney.com", pricing: ToolPricing.PAID, tags: ["图像"], official: false, desc: "高质量风格化图像生成，常用于首尾帧素材。" },
+  { slug: "flux", name: "Flux", category: "图像生成", url: "https://blackforestlabs.ai", pricing: ToolPricing.FREEMIUM, tags: ["图像", "开源"], official: false, desc: "Black Forest Labs 出品，可控性强。" },
+  { slug: "comfyui", name: "ComfyUI", category: "工作流", url: "https://www.comfy.org/", pricing: ToolPricing.FREE, tags: ["工作流", "开源"], official: false, desc: "节点式 AI 工作流编辑器。" },
+  { slug: "tripo", name: "Tripo 3D", category: "3D", url: "https://www.tripo3d.ai", pricing: ToolPricing.FREEMIUM, tags: ["3D"], official: false, desc: "图片/文本 → 3D 模型，可衔接动画工作流。" },
+  { slug: "suno", name: "Suno", category: "音频", url: "https://suno.com", pricing: ToolPricing.FREEMIUM, tags: ["音频"], official: false, desc: "AI 音乐生成，MV 配乐利器。" },
+  { slug: "elevenlabs", name: "ElevenLabs", category: "音频", url: "https://elevenlabs.io", pricing: ToolPricing.FREEMIUM, tags: ["音频", "TTS"], official: false, desc: "高质量语音合成。" },
+  { slug: "topaz-video-ai", name: "Topaz Video AI", category: "后期", url: "https://www.topazlabs.com/topaz-video-ai", pricing: ToolPricing.PAID, tags: ["后期", "超分"], official: false, desc: "AI 视频超分与稳定。" },
+  { slug: "davinci-resolve", name: "DaVinci Resolve", category: "后期", url: "https://www.blackmagicdesign.com/products/davinciresolve", pricing: ToolPricing.FREEMIUM, tags: ["剪辑", "调色"], official: false, desc: "免费版已足够大多数 AI 视频剪辑。" },
+  { slug: "after-effects", name: "After Effects", category: "后期", url: "https://www.adobe.com/products/aftereffects.html", pricing: ToolPricing.PAID, tags: ["合成", "VFX"], official: false, desc: "Adobe 经典合成工具。" },
+  { slug: "luma-dream-machine", name: "Luma Dream Machine", category: "视频生成", url: "https://lumalabs.ai/dream-machine", pricing: ToolPricing.FREEMIUM, tags: ["视频"], official: false, desc: "Luma 旗下的视频生成模型。" },
+] as const;
+
+const POST_TEMPLATES: Array<{ channel: string; title: string; content: string }> = [
+  { channel: "showcase", title: "首部 AI 短片《潮汐都市》上线", content: "用 Seedance 2.0 跑了 24 个镜头，3 天内出片，欢迎来吐槽。" },
+  { channel: "showcase", title: "霓虹雨夜街景测试", content: "1080p × 5s × 16:9，提示词放评论区。" },
+  { channel: "showcase", title: "Anime 风《樱花列车》",  content: "首尾帧控制 + Suno 配乐，长度 1:20。" },
+  { channel: "prompts", title: "我的万能起手 Prompt 模板", content: "结构：风格 / 场景 / 主体 / 镜头 / 灯光 / 色调，按这个顺序你试试。" },
+  { channel: "prompts", title: "如何用关键词控制摄影机推拉", content: "关键词清单 + 失败 case 对照。" },
+  { channel: "prompts", title: "中文 vs 英文提示词的实测差异", content: "同一场景两版输入跑 5 次取平均。" },
+  { channel: "seedance", title: "Seedance 2.0 vs Fast 出片对比", content: "成本、速度、细节三个维度的表格。" },
+  { channel: "seedance", title: "Ark API 限流避坑", content: "并发 > 4 会被节流，建议本地排队。" },
+  { channel: "first-last-frame", title: "首尾帧一定要保持一致颜色吗", content: "实测：色温差 200K 内基本不抖。" },
+  { channel: "anime", title: "和风线条的 LoRA 推荐", content: "三个我用得最顺的 LoRA。" },
+  { channel: "sci-fi", title: "赛博朋克城市镜头合集", content: "10 个镜头，分享给同好。" },
+  { channel: "sci-fi", title: "太空舱内部的光照难点", content: "实测让模型理解 'rim light' 真的有用。" },
+  { channel: "documentary", title: "用 AI 重建 1980s 上海街景", content: "档案照 → 首帧 → 多镜头生成。" },
+  { channel: "vfx-experiment", title: "用首尾帧做粒子转场", content: "效果意外的好，附 prompt。" },
+  { channel: "music-video", title: "Suno + Seedance 一条龙做 MV", content: "30 分钟出片的流水线分享。" },
+  { channel: "ads-creative", title: "电商 5 秒短视频流水线", content: "从产品图 → 图生 → 自动剪。" },
+  { channel: "tooling", title: "Ark API 批量提交脚本", content: "支持失败重试和指数退避，开源链接见正文。" },
+  { channel: "tooling", title: "Prompt 模板管理小工具", content: "类似 snippets，按标签调用。" },
+  { channel: "newbie", title: "新手必读：参数到底是啥意思", content: "分辨率 / 比例 / 时长 / 种子 一次讲清楚。" },
+  { channel: "newbie", title: "我跑出来的视频闪烁怎么办", content: "排查清单 + 5 个常见原因。" },
+];
+
+const WORKS = [
+  { title: "潮汐都市 · 开场", desc: "霓虹雨夜镜头，慢镜推进。", prompt: "neon-soaked metropolis at dusk, cinematic dolly-in", mode: WorkMode.TEXT_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "16:9", duration: 5 },
+  { title: "樱花列车", desc: "动漫风，列车驶过樱花隧道。", prompt: "anime style, shinkansen passing through sakura tunnel", mode: WorkMode.FIRST_LAST_FRAME, model: WorkModel.SEEDANCE_2_0, resolution: "720p", ratio: "16:9", duration: 6 },
+  { title: "潜入太空舱", desc: "赛博风 + 太空。", prompt: "interior of a cyberpunk space capsule, dramatic rim light", mode: WorkMode.IMAGE_TO_VIDEO, model: WorkModel.SEEDANCE_FAST, resolution: "1080p", ratio: "21:9", duration: 5 },
+  { title: "墨意 · 山雨", desc: "水墨实验风格。", prompt: "ink wash painting style, distant mountains in rain", mode: WorkMode.TEXT_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "1:1", duration: 4 },
+  { title: "广告 · 香水", desc: "5 秒电商广告样片。", prompt: "perfume bottle on rotating pedestal, soft pink lighting", mode: WorkMode.IMAGE_TO_VIDEO, model: WorkModel.SEEDANCE_FAST, resolution: "1080p", ratio: "9:16", duration: 5 },
+  { title: "纪录 · 老外滩", desc: "1980s 上海风格。", prompt: "1980s Shanghai bund, archival film grain, pedestrians", mode: WorkMode.MULTI_REFERENCE, model: WorkModel.SEEDANCE_2_0, resolution: "720p", ratio: "4:3", duration: 6 },
+  { title: "MV · 心跳", desc: "电子节奏的城市夜景。", prompt: "city skyline at night, neon pulsing to bpm 128", mode: WorkMode.TEXT_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "16:9", duration: 6 },
+  { title: "粒子转场测试", desc: "VFX 实验。", prompt: "abstract particle dissolve transition, gold and teal", mode: WorkMode.FIRST_LAST_FRAME, model: WorkModel.SEEDANCE_FAST, resolution: "720p", ratio: "16:9", duration: 3 },
+  { title: "森林晨雾", desc: "自然风光小品。", prompt: "morning fog rolling through pine forest, soft sunbeams", mode: WorkMode.TEXT_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "16:9", duration: 5 },
+  { title: "未来发布会", desc: "科幻舞台。", prompt: "futuristic keynote stage, holographic UI floating", mode: WorkMode.IMAGE_TO_VIDEO, model: WorkModel.SEEDANCE_FAST, resolution: "1080p", ratio: "16:9", duration: 5 },
+] as const;
+
+const COLLABS = [
+  { title: "招一个会写 Prompt 的搭子", desc: "我擅长后期，缺一个 prompt 工程师，共做 1 分钟短片。", type: CollaborationType.LOOKING_FOR, budget: "分成", tags: ["短片", "Prompt"] },
+  { title: "提供 Seedance 2.0 渲染额度", desc: "我有 Ark 配额，可以帮你跑测试镜头，换你的创作素材。", type: CollaborationType.OFFERING, budget: "互换", tags: ["渲染额度", "Seedance"] },
+  { title: "招二次元美术合作", desc: "MV 项目，需要二次元角色设定 + 关键帧。", type: CollaborationType.LOOKING_FOR, budget: "3000-5000 元", tags: ["MV", "二次元"] },
+  { title: "纪录片项目找剪辑师", desc: "AI 重建上海 1980s，60 分钟成片。", type: CollaborationType.LOOKING_FOR, budget: "面议", tags: ["纪录片", "剪辑"] },
+  { title: "可提供 3D 建模 + 渲染", desc: "Blender / Tripo 都熟，能配合 AI 工作流。", type: CollaborationType.OFFERING, budget: "1500/分钟起", tags: ["3D", "Blender"] },
+  { title: "广告流水线搭建外包", desc: "需要一套从产品图到 5 秒视频的自动化脚本。", type: CollaborationType.LOOKING_FOR, budget: "20000 元", tags: ["广告", "自动化"] },
+  { title: "我可以接 MV 项目", desc: "Seedance 重度用户，1-2 周交付。", type: CollaborationType.OFFERING, budget: "10000/分钟起", tags: ["MV"] },
+  { title: "实验影像作者寻投稿合作", desc: "做实验短片，想和发行/影展对接。", type: CollaborationType.LOOKING_FOR, budget: "无", tags: ["实验影像", "影展"] },
+] as const;
+
+async function main() {
+  console.log("→ 清空数据…");
+  await prisma.$transaction([
+    prisma.bookmark.deleteMany(),
+    prisma.like.deleteMany(),
+    prisma.message.deleteMany(),
+    prisma.conversationParticipant.deleteMany(),
+    prisma.conversation.deleteMany(),
+    prisma.comment.deleteMany(),
+    prisma.work.deleteMany(),
+    prisma.collaboration.deleteMany(),
+    prisma.post.deleteMany(),
+    prisma.channelMember.deleteMany(),
+    prisma.channel.deleteMany(),
+    prisma.tool.deleteMany(),
+    prisma.user.deleteMany(),
+  ]);
+
+  console.log("→ 写入 users（密码统一为 seedland-dev-2026）…");
+  const sharedHash = await hashPassword("seedland-dev-2026");
+  const users = await Promise.all(
+    USERS.map((u) =>
+      prisma.user.create({
+        data: {
+          email: u.email,
+          username: u.username,
+          name: u.name,
+          bio: u.bio,
+          role: u.role,
+          avatar: `https://api.dicebear.com/9.x/glass/svg?seed=${u.username}`,
+          passwordHash: sharedHash,
+        },
+      })
+    )
+  );
+  console.log(`   ✓ ${users.length} users (login with password: seedland-dev-2026)`);
+
+  console.log("→ 写入 channels…");
+  const channels = await Promise.all(
+    CHANNELS.map((c, i) =>
+      prisma.channel.create({
+        data: {
+          slug: c.slug,
+          name: c.name,
+          description: c.description,
+          icon: c.icon,
+          color: c.color,
+          ownerId: users[i % users.length].id,
+        },
+      })
+    )
+  );
+  console.log(`   ✓ ${channels.length} channels`);
+
+  console.log("→ 写入 channel memberships（每人加入 5 个频道）…");
+  let memberships = 0;
+  for (const user of users) {
+    const shuffled = [...channels].sort(() => Math.random() - 0.5).slice(0, 5);
+    for (const ch of shuffled) {
+      await prisma.channelMember.upsert({
+        where: { channelId_userId: { channelId: ch.id, userId: user.id } },
+        update: {},
+        create: { channelId: ch.id, userId: user.id },
+      });
+      memberships++;
+    }
+  }
+  console.log(`   ✓ ${memberships} memberships`);
+
+  console.log("→ 写入 tools…");
+  const tools = await Promise.all(
+    TOOLS.map((t, i) =>
+      prisma.tool.create({
+        data: {
+          slug: t.slug,
+          name: t.name,
+          description: t.desc,
+          url: t.url,
+          category: t.category,
+          pricing: t.pricing,
+          tags: [...t.tags],
+          isOfficial: t.official,
+          createdById: users[i % users.length].id,
+          logoUrl: `https://api.dicebear.com/9.x/icons/svg?seed=${t.slug}`,
+        },
+      })
+    )
+  );
+  console.log(`   ✓ ${tools.length} tools`);
+
+  console.log("→ 写入 posts…");
+  const channelBySlug = new Map(channels.map((c) => [c.slug, c]));
+  const posts = await Promise.all(
+    POST_TEMPLATES.map((p, i) => {
+      const channel = channelBySlug.get(p.channel);
+      if (!channel) throw new Error(`channel not found: ${p.channel}`);
+      return prisma.post.create({
+        data: {
+          channelId: channel.id,
+          authorId: users[i % users.length].id,
+          title: p.title,
+          content: p.content,
+          views: 50 + Math.floor(Math.random() * 1000),
+          pinned: i === 0,
+        },
+      });
+    })
+  );
+  console.log(`   ✓ ${posts.length} posts`);
+
+  console.log("→ 写入 comments（每帖 1-3 条）…");
+  let totalComments = 0;
+  for (const post of posts) {
+    const n = 1 + Math.floor(Math.random() * 3);
+    for (let k = 0; k < n; k++) {
+      const author = users[(post.authorId.charCodeAt(0) + k) % users.length];
+      if (author.id === post.authorId) continue;
+      await prisma.comment.create({
+        data: {
+          postId: post.id,
+          authorId: author.id,
+          content: ["+1，能开源吗", "细节很顶", "求 prompt", "学习了", "顶一下", "想看更多镜头"][k % 6],
+        },
+      });
+      totalComments++;
+    }
+    await prisma.post.update({
+      where: { id: post.id },
+      data: { commentCount: n },
+    });
+  }
+  console.log(`   ✓ ${totalComments} comments`);
+
+  console.log("→ 写入 works…");
+  const works = await Promise.all(
+    WORKS.map((w, i) =>
+      prisma.work.create({
+        data: {
+          authorId: users[i % users.length].id,
+          title: w.title,
+          description: w.desc,
+          videoUrl: `https://seedland.dev/sample/${i + 1}.mp4`,
+          thumbnailUrl: `https://api.dicebear.com/9.x/shapes/svg?seed=work-${i}`,
+          prompt: w.prompt,
+          mode: w.mode,
+          model: w.model,
+          resolution: w.resolution,
+          ratio: w.ratio,
+          durationSec: w.duration,
+          views: 100 + Math.floor(Math.random() * 2000),
+        },
+      })
+    )
+  );
+  console.log(`   ✓ ${works.length} works`);
+
+  console.log("→ 写入 collaborations…");
+  const collabs = await Promise.all(
+    COLLABS.map((c, i) =>
+      prisma.collaboration.create({
+        data: {
+          authorId: users[i % users.length].id,
+          title: c.title,
+          description: c.desc,
+          type: c.type,
+          status: i === COLLABS.length - 1 ? CollaborationStatus.CLOSED : CollaborationStatus.OPEN,
+          budget: c.budget,
+          tags: [...c.tags],
+        },
+      })
+    )
+  );
+  console.log(`   ✓ ${collabs.length} collaborations`);
+
+  console.log("→ 写入 likes + bookmarks…");
+  let likes = 0;
+  let bookmarks = 0;
+  for (const user of users) {
+    // 给随机 5 个帖子点赞
+    const targets = [...posts].sort(() => Math.random() - 0.5).slice(0, 5);
+    for (const p of targets) {
+      if (p.authorId === user.id) continue;
+      await prisma.like.upsert({
+        where: { userId_postId: { userId: user.id, postId: p.id } },
+        update: {},
+        create: { userId: user.id, postId: p.id },
+      });
+      likes++;
+    }
+    // 收藏 2 个作品
+    const wTargets = [...works].sort(() => Math.random() - 0.5).slice(0, 2);
+    for (const w of wTargets) {
+      if (w.authorId === user.id) continue;
+      await prisma.bookmark.upsert({
+        where: { userId_workId: { userId: user.id, workId: w.id } },
+        update: {},
+        create: { userId: user.id, workId: w.id },
+      });
+      bookmarks++;
+    }
+  }
+  console.log(`   ✓ ${likes} likes, ${bookmarks} bookmarks`);
+
+  console.log("→ 写入 conversations + messages…");
+  const [u1, u2, u3] = users;
+  const conv = await prisma.conversation.create({
+    data: {
+      participants: {
+        create: [{ userId: u1.id }, { userId: u2.id }],
+      },
+    },
+  });
+  await prisma.message.createMany({
+    data: [
+      { conversationId: conv.id, senderId: u1.id, content: "你那条 Anime 风格的视频用了哪个 LoRA？" },
+      { conversationId: conv.id, senderId: u2.id, content: "晚点发你。你那个 prompt 模板还在用吗？" },
+      { conversationId: conv.id, senderId: u1.id, content: "在的，我整理一份你看看。" },
+    ],
+  });
+  const conv2 = await prisma.conversation.create({
+    data: {
+      participants: {
+        create: [{ userId: u1.id }, { userId: u3.id }],
+      },
+    },
+  });
+  await prisma.message.create({
+    data: { conversationId: conv2.id, senderId: u3.id, content: "MV 项目的合作我感兴趣，方便聊聊吗" },
+  });
+  console.log("   ✓ 2 conversations, 4 messages");
+
+  // 汇总
+  const counts = await Promise.all([
+    prisma.user.count(),
+    prisma.channel.count(),
+    prisma.post.count(),
+    prisma.comment.count(),
+    prisma.work.count(),
+    prisma.collaboration.count(),
+    prisma.tool.count(),
+    prisma.conversation.count(),
+    prisma.message.count(),
+    prisma.like.count(),
+    prisma.bookmark.count(),
+  ]);
+  console.log("\n┌─────────────────┬────────┐");
+  console.log("│ table           │ rows   │");
+  console.log("├─────────────────┼────────┤");
+  const labels = [
+    "users",
+    "channels",
+    "posts",
+    "comments",
+    "works",
+    "collaborations",
+    "tools",
+    "conversations",
+    "messages",
+    "likes",
+    "bookmarks",
+  ];
+  labels.forEach((label, i) => {
+    console.log(`│ ${label.padEnd(15)} │ ${String(counts[i]).padStart(6)} │`);
+  });
+  console.log("└─────────────────┴────────┘");
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
