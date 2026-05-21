@@ -101,7 +101,7 @@ export function Navbar({ user }: { user: NavbarUser | null }) {
             variant="outline"
             size="sm"
             nativeButton={false}
-            render={<Link href="/showcase/upload" />}
+            render={<Link href="/create-work" />}
           >
             <Upload className="size-3.5" />
             发布

@@ -30,6 +30,18 @@ enum WorkMode {
   MULTI_REFERENCE
 }
 
+enum WorkCategory {
+  AI_COMIC        // AI 漫剧
+  AI_DRAMA        // AI 短剧
+  AI_ANIMATION    // AI 动画
+  DIGITAL_HUMAN   // 数字人视频
+  ECOMMERCE_AD    // 电商广告视频
+  PRODUCT_SHOW    // 产品展示视频
+  KNOWLEDGE       // 知识讲解视频
+  STORY           // 故事类视频
+  EXPERIMENT      // 实验短片
+}
+
 enum CollaborationType {
   LOOKING_FOR // 我正在找
   OFFERING    // 我可以提供
@@ -184,23 +196,25 @@ model Comment {
 // ───────────────────────────── Work (用户 AI 视频作品) ─────────────────────────────
 
 model Work {
-  id            String    @id @default(cuid())
-  authorId      String    @map("author_id")
+  id            String       @id @default(cuid())
+  authorId      String       @map("author_id")
   title         String
   description   String?
-  videoUrl      String    @map("video_url")
-  thumbnailUrl  String?   @map("thumbnail_url")
-  model         WorkModel @default(SEEDANCE_2_0)
-  mode          WorkMode  @default(TEXT_TO_VIDEO)
+  videoUrl      String       @map("video_url")
+  thumbnailUrl  String?      @map("thumbnail_url")
+  category      WorkCategory @default(STORY) // 作品类型，例 AI 漫剧 / AI 短剧
+  tools         String[]     @default([]) // 使用工具，例 ["Seedance 2.0", "Runway"]
+  model         WorkModel    @default(SEEDANCE_2_0)
+  mode          WorkMode     @default(TEXT_TO_VIDEO)
   prompt        String?
-  durationSec   Int?      @map("duration_sec")
+  durationSec   Int?         @map("duration_sec")
   resolution    String? // 例 "1080p"
   ratio         String? // 例 "16:9"
-  views         Int       @default(0)
-  likeCount     Int       @default(0) @map("like_count")
-  bookmarkCount Int       @default(0) @map("bookmark_count")
-  isPublic      Boolean   @default(true) @map("is_public")
-  createdAt     DateTime  @default(now()) @map("created_at")
+  views         Int          @default(0)
+  likeCount     Int          @default(0) @map("like_count")
+  bookmarkCount Int          @default(0) @map("bookmark_count")
+  isPublic      Boolean      @default(true) @map("is_public")
+  createdAt     DateTime     @default(now()) @map("created_at")
 
   author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   likes     Like[]
@@ -208,6 +222,7 @@ model Work {
 
   @@index([authorId])
   @@index([createdAt])
+  @@index([category])
   @@map("works")
 }
 

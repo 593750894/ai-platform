@@ -24,10 +24,10 @@ const QUICK_ENTRIES = [
     tone: "from-cyan-500/20 to-blue-500/10 border-cyan-500/30",
   },
   {
-    href: "/showcase/upload",
+    href: "/create-work",
     icon: Sparkles,
     title: "发布我的新作品",
-    desc: "上传成片 + prompt + 工作流分享",
+    desc: "上传成片 + 简介 + 使用工具",
     tone: "from-fuchsia-500/20 to-purple-500/10 border-fuchsia-500/30",
   },
   {

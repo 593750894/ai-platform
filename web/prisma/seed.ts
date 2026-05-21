@@ -11,6 +11,7 @@ import {
   PrismaClient,
   Role,
   ToolPricing,
+  WorkCategory,
   WorkMode,
   WorkModel,
 } from "../src/generated/prisma/client";
@@ -152,16 +153,20 @@ const POST_TEMPLATES: Array<{
 ];
 
 const WORKS = [
-  { title: "潮汐都市 · 开场", desc: "霓虹雨夜镜头，慢镜推进。", prompt: "neon-soaked metropolis at dusk, cinematic dolly-in", mode: WorkMode.TEXT_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "16:9", duration: 5 },
-  { title: "樱花列车", desc: "动漫风，列车驶过樱花隧道。", prompt: "anime style, shinkansen passing through sakura tunnel", mode: WorkMode.FIRST_LAST_FRAME, model: WorkModel.SEEDANCE_2_0, resolution: "720p", ratio: "16:9", duration: 6 },
-  { title: "潜入太空舱", desc: "赛博风 + 太空。", prompt: "interior of a cyberpunk space capsule, dramatic rim light", mode: WorkMode.IMAGE_TO_VIDEO, model: WorkModel.SEEDANCE_FAST, resolution: "1080p", ratio: "21:9", duration: 5 },
-  { title: "墨意 · 山雨", desc: "水墨实验风格。", prompt: "ink wash painting style, distant mountains in rain", mode: WorkMode.TEXT_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "1:1", duration: 4 },
-  { title: "广告 · 香水", desc: "5 秒电商广告样片。", prompt: "perfume bottle on rotating pedestal, soft pink lighting", mode: WorkMode.IMAGE_TO_VIDEO, model: WorkModel.SEEDANCE_FAST, resolution: "1080p", ratio: "9:16", duration: 5 },
-  { title: "纪录 · 老外滩", desc: "1980s 上海风格。", prompt: "1980s Shanghai bund, archival film grain, pedestrians", mode: WorkMode.MULTI_REFERENCE, model: WorkModel.SEEDANCE_2_0, resolution: "720p", ratio: "4:3", duration: 6 },
-  { title: "MV · 心跳", desc: "电子节奏的城市夜景。", prompt: "city skyline at night, neon pulsing to bpm 128", mode: WorkMode.TEXT_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "16:9", duration: 6 },
-  { title: "粒子转场测试", desc: "VFX 实验。", prompt: "abstract particle dissolve transition, gold and teal", mode: WorkMode.FIRST_LAST_FRAME, model: WorkModel.SEEDANCE_FAST, resolution: "720p", ratio: "16:9", duration: 3 },
-  { title: "森林晨雾", desc: "自然风光小品。", prompt: "morning fog rolling through pine forest, soft sunbeams", mode: WorkMode.TEXT_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "16:9", duration: 5 },
-  { title: "未来发布会", desc: "科幻舞台。", prompt: "futuristic keynote stage, holographic UI floating", mode: WorkMode.IMAGE_TO_VIDEO, model: WorkModel.SEEDANCE_FAST, resolution: "1080p", ratio: "16:9", duration: 5 },
+  { title: "潮汐都市 · 开场", desc: "霓虹雨夜镜头，慢镜推进，作为我新片的开场。", prompt: "neon-soaked metropolis at dusk, cinematic dolly-in", category: WorkCategory.STORY, tools: ["Seedance 2.0", "DaVinci Resolve"], mode: WorkMode.TEXT_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "16:9", duration: 5 },
+  { title: "樱花列车", desc: "动漫风，列车驶过樱花隧道，配 Suno 的纯音乐。", prompt: "anime style, shinkansen passing through sakura tunnel", category: WorkCategory.AI_ANIMATION, tools: ["Seedance 2.0", "Suno", "ComfyUI"], mode: WorkMode.FIRST_LAST_FRAME, model: WorkModel.SEEDANCE_2_0, resolution: "720p", ratio: "16:9", duration: 6 },
+  { title: "潜入太空舱", desc: "赛博风 + 太空，单镜推进的实验镜头。", prompt: "interior of a cyberpunk space capsule, dramatic rim light", category: WorkCategory.EXPERIMENT, tools: ["Seedance Fast", "Flux"], mode: WorkMode.IMAGE_TO_VIDEO, model: WorkModel.SEEDANCE_FAST, resolution: "1080p", ratio: "21:9", duration: 5 },
+  { title: "墨意 · 山雨", desc: "水墨实验风格，用首尾帧约束节奏。", prompt: "ink wash painting style, distant mountains in rain", category: WorkCategory.EXPERIMENT, tools: ["Seedance 2.0", "ComfyUI"], mode: WorkMode.TEXT_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "1:1", duration: 4 },
+  { title: "广告 · 香水", desc: "5 秒电商广告样片，竖屏直接投流。", prompt: "perfume bottle on rotating pedestal, soft pink lighting", category: WorkCategory.ECOMMERCE_AD, tools: ["Seedance Fast", "Midjourney"], mode: WorkMode.IMAGE_TO_VIDEO, model: WorkModel.SEEDANCE_FAST, resolution: "1080p", ratio: "9:16", duration: 5 },
+  { title: "纪录 · 老外滩", desc: "1980s 上海风格，从档案照到运动镜头。", prompt: "1980s Shanghai bund, archival film grain, pedestrians", category: WorkCategory.KNOWLEDGE, tools: ["Seedance 2.0", "After Effects"], mode: WorkMode.MULTI_REFERENCE, model: WorkModel.SEEDANCE_2_0, resolution: "720p", ratio: "4:3", duration: 6 },
+  { title: "MV · 心跳", desc: "电子节奏的城市夜景，配 BPM 128 的电子曲。", prompt: "city skyline at night, neon pulsing to bpm 128", category: WorkCategory.STORY, tools: ["Seedance 2.0", "Suno", "DaVinci Resolve"], mode: WorkMode.TEXT_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "16:9", duration: 6 },
+  { title: "粒子转场测试", desc: "VFX 实验，金 / 蓝粒子溶解转场。", prompt: "abstract particle dissolve transition, gold and teal", category: WorkCategory.EXPERIMENT, tools: ["Seedance Fast", "After Effects"], mode: WorkMode.FIRST_LAST_FRAME, model: WorkModel.SEEDANCE_FAST, resolution: "720p", ratio: "16:9", duration: 3 },
+  { title: "森林晨雾", desc: "自然风光小品，作为产品广告底素材。", prompt: "morning fog rolling through pine forest, soft sunbeams", category: WorkCategory.PRODUCT_SHOW, tools: ["Seedance 2.0"], mode: WorkMode.TEXT_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "16:9", duration: 5 },
+  { title: "未来发布会", desc: "科幻舞台，用于品牌发布概念片。", prompt: "futuristic keynote stage, holographic UI floating", category: WorkCategory.PRODUCT_SHOW, tools: ["Seedance Fast", "After Effects"], mode: WorkMode.IMAGE_TO_VIDEO, model: WorkModel.SEEDANCE_FAST, resolution: "1080p", ratio: "16:9", duration: 5 },
+  { title: "AI 漫剧《雾港》第 1 话", desc: "竖屏漫剧节奏，分镜驱动叙事。", prompt: "vertical comic-style short drama, foggy harbor city", category: WorkCategory.AI_COMIC, tools: ["Seedance 2.0", "Midjourney", "ElevenLabs"], mode: WorkMode.IMAGE_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "9:16", duration: 60 },
+  { title: "AI 短剧《地下车库》预告", desc: "30 秒预告，竖屏短剧，悬疑题材。", prompt: "vertical micro-drama trailer, underground parking, suspense", category: WorkCategory.AI_DRAMA, tools: ["Seedance 2.0", "Kling AI", "DaVinci Resolve"], mode: WorkMode.TEXT_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "9:16", duration: 30 },
+  { title: "数字人 Lina · 产品口播", desc: "30 秒数字人讲解，可批量复用模板。", prompt: "digital human Lina speaking to camera, soft studio lighting", category: WorkCategory.DIGITAL_HUMAN, tools: ["Seedance 2.0", "ElevenLabs"], mode: WorkMode.IMAGE_TO_VIDEO, model: WorkModel.SEEDANCE_2_0, resolution: "1080p", ratio: "16:9", duration: 30 },
+  { title: "三分钟讲清楚扩散模型", desc: "知识讲解，配图文 + 数字人讲述。", prompt: "explainer animation, diffusion model visualized step by step", category: WorkCategory.KNOWLEDGE, tools: ["Seedance Fast", "Midjourney", "ElevenLabs"], mode: WorkMode.TEXT_TO_VIDEO, model: WorkModel.SEEDANCE_FAST, resolution: "1080p", ratio: "16:9", duration: 180 },
 ] as const;
 
 const COLLABS = [
@@ -322,12 +327,16 @@ async function main() {
           videoUrl: `https://seedland.dev/sample/${i + 1}.mp4`,
           thumbnailUrl: `https://api.dicebear.com/9.x/shapes/svg?seed=work-${i}`,
           prompt: w.prompt,
+          category: w.category,
+          tools: [...w.tools],
           mode: w.mode,
           model: w.model,
           resolution: w.resolution,
           ratio: w.ratio,
           durationSec: w.duration,
           views: 100 + Math.floor(Math.random() * 2000),
+          likeCount: 20 + Math.floor(Math.random() * 500),
+          bookmarkCount: 5 + Math.floor(Math.random() * 80),
         },
       })
     )
