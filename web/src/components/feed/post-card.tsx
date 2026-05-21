@@ -78,7 +78,7 @@ export function PostCard({
       </div>
 
       <Link
-        href={`/community/${post.channel?.id ?? ""}#post-${post.id}`}
+        href={`/post/${post.id}`}
         className="mt-2 block text-base font-semibold leading-snug text-foreground/95 group-hover:text-primary"
       >
         {post.title}
