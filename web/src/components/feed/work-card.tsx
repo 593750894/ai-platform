@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bookmark, Heart, Play, Sparkles, Wrench } from "lucide-react";
+import { Play, Sparkles, Wrench } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -7,6 +7,10 @@ import {
   workCategoryMeta,
   type WorkCategoryValue,
 } from "@/lib/work-categories";
+import {
+  BookmarkButton,
+  LikeButton,
+} from "@/components/feed/interaction-buttons";
 
 // 兼容旧 demo 字段（页面上仍有 mock 占位），同时支持新的 DB 字段。
 export type Work = {
@@ -46,15 +50,17 @@ function formatDuration(sec?: number | null, fallback?: string): string {
   return fallback ?? "—";
 }
 
-function formatCount(value: number | string | undefined): string {
-  if (value == null) return "0";
-  if (typeof value === "string") return value;
-  if (value >= 10000) return `${(value / 10000).toFixed(1)}w`;
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
-  return value.toString();
-}
-
-export function WorkCard({ work }: { work: Work }) {
+export function WorkCard({
+  work,
+  signedIn = false,
+  liked = false,
+  bookmarked = false,
+}: {
+  work: Work;
+  signedIn?: boolean;
+  liked?: boolean;
+  bookmarked?: boolean;
+}) {
   const ratio = work.ratio ?? "16:9";
   const aspect =
     ratio === "9:16"
@@ -65,15 +71,21 @@ export function WorkCard({ work }: { work: Work }) {
   const meta = work.category ? workCategoryMeta(work.category) : null;
   const coverGradient = work.cover ?? meta?.cover ?? "from-slate-700/60 via-slate-800/60 to-slate-950/80";
   const tint = work.authorTint ?? authorTintFromName(work.author);
-  const likes = work.likes ?? work.likeCount;
-  const bookmarks = work.bookmarkCount;
+  const likeCount =
+    typeof work.likeCount === "number"
+      ? work.likeCount
+      : typeof work.likes === "number"
+        ? work.likes
+        : 0;
+  const bookmarkCount = work.bookmarkCount ?? 0;
   return (
-    <Link
-      href={`/showcase/${work.id}`}
-      className="group relative block overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-card/70 via-card/40 to-card/20 shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset] transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-[0_12px_40px_-12px_rgba(56,189,248,0.45)]"
-    >
+    <div className="group relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-card/70 via-card/40 to-card/20 shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset] transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-[0_12px_40px_-12px_rgba(56,189,248,0.45)]">
       {/* 卡片视觉与普通帖子区分：双层光晕 + 顶部强渐变 + 角标 */}
-      <div className={cn("relative w-full overflow-hidden", aspect)}>
+      <Link
+        href={`/showcase/${work.id}`}
+        aria-label={work.title}
+        className={cn("relative block w-full overflow-hidden", aspect)}
+      >
         {work.thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -115,12 +127,15 @@ export function WorkCard({ work }: { work: Work }) {
             <Play className="size-6 fill-white text-white" />
           </span>
         </span>
-      </div>
+      </Link>
 
       <div className="space-y-2 p-3">
-        <h3 className="line-clamp-2 text-sm font-medium leading-snug text-foreground/95 group-hover:text-foreground">
+        <Link
+          href={`/showcase/${work.id}`}
+          className="line-clamp-2 block text-sm font-medium leading-snug text-foreground/95 hover:text-primary"
+        >
           {work.title}
-        </h3>
+        </Link>
 
         {work.description && (
           <p className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
@@ -166,17 +181,22 @@ export function WorkCard({ work }: { work: Work }) {
         )}
 
         <div className="flex items-center justify-between border-t border-border/30 pt-2 text-[11px] text-muted-foreground tabular-nums">
-          <span className="inline-flex items-center gap-1">
-            <Heart className="size-3" />
-            {formatCount(likes)}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Bookmark className="size-3" />
-            {formatCount(bookmarks ?? work.comments)}
-          </span>
+          <LikeButton
+            target={{ kind: "work", id: work.id }}
+            initialActive={liked}
+            initialCount={likeCount}
+            signedIn={signedIn}
+          />
+          <BookmarkButton
+            target={{ kind: "work", id: work.id }}
+            initialActive={bookmarked}
+            initialCount={bookmarkCount}
+            signedIn={signedIn}
+            showCount
+          />
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 

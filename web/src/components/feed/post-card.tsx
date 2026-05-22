@@ -1,8 +1,12 @@
 import Link from "next/link";
-import { Eye, Heart, ImageIcon, MessageCircle, Pin, Play } from "lucide-react";
+import { Eye, ImageIcon, MessageCircle, Pin, Play } from "lucide-react";
 
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { postTypeMeta, type PostTypeValue } from "@/lib/post-types";
+import {
+  BookmarkButton,
+  LikeButton,
+} from "@/components/feed/interaction-buttons";
 
 export type PostCardData = {
   id: string;
@@ -34,9 +38,15 @@ export type PostCardData = {
 export function PostCard({
   post,
   showChannel = false,
+  signedIn = false,
+  liked = false,
+  bookmarked = false,
 }: {
   post: PostCardData;
   showChannel?: boolean;
+  signedIn?: boolean;
+  liked?: boolean;
+  bookmarked?: boolean;
 }) {
   const meta = postTypeMeta(post.type);
   const hasMedia = Boolean(post.videoUrl || post.imageUrl);
@@ -126,19 +136,26 @@ export function PostCard({
             {post.author.name}
           </Link>
         </div>
-        <div className="ml-auto flex items-center gap-3 tabular-nums">
+        <div className="ml-auto flex items-center gap-2 tabular-nums">
           <span className="inline-flex items-center gap-1">
             <Eye className="size-3" />
             {post.views}
           </span>
           <span className="inline-flex items-center gap-1">
-            <Heart className="size-3" />
-            {post.likeCount}
-          </span>
-          <span className="inline-flex items-center gap-1">
             <MessageCircle className="size-3" />
             {post.commentCount}
           </span>
+          <LikeButton
+            target={{ kind: "post", id: post.id }}
+            initialActive={liked}
+            initialCount={post.likeCount}
+            signedIn={signedIn}
+          />
+          <BookmarkButton
+            target={{ kind: "post", id: post.id }}
+            initialActive={bookmarked}
+            signedIn={signedIn}
+          />
         </div>
       </div>
     </article>

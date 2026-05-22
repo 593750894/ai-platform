@@ -5,6 +5,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { WorkCard, type Work } from "@/components/feed/work-card";
 import { prisma } from "@/lib/db";
+import { getSession } from "@/lib/auth/session";
+import { loadInteractionState } from "@/lib/interactions/queries";
 import { cn } from "@/lib/utils";
 import {
   WORK_CATEGORY_ORDER,
@@ -57,10 +59,16 @@ export default async function ShowcasePage({
       ? (category as WorkCategoryValue)
       : null;
 
-  const [works, counts] = await Promise.all([
+  const [works, counts, session] = await Promise.all([
     getWorks(activeCategory ?? undefined),
     getCategoryCounts(),
+    getSession(),
   ]);
+
+  const interactions = await loadInteractionState({
+    workIds: works.map((w) => w.id),
+  });
+  const signedIn = Boolean(session);
 
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
@@ -171,7 +179,13 @@ export default async function ShowcasePage({
         ) : (
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {items.map((w) => (
-              <WorkCard key={w.id} work={w} />
+              <WorkCard
+                key={w.id}
+                work={w}
+                signedIn={signedIn}
+                liked={interactions.likedWorkIds.has(w.id)}
+                bookmarked={interactions.bookmarkedWorkIds.has(w.id)}
+              />
             ))}
           </section>
         )}

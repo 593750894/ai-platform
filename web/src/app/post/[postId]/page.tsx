@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   Eye,
-  Heart,
   ImageIcon,
   Lock,
   MessageCircle,
@@ -15,8 +14,13 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { CommentForm } from "@/components/feed/comment-form";
 import { CommentList, type CommentItem } from "@/components/feed/comment-list";
+import {
+  BookmarkButton,
+  LikeButton,
+} from "@/components/feed/interaction-buttons";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { loadInteractionState } from "@/lib/interactions/queries";
 import { formatRelativeTime } from "@/lib/utils";
 import { postTypeMeta } from "@/lib/post-types";
 
@@ -73,8 +77,14 @@ export default async function PostDetailPage({
   ]);
   if (!post) notFound();
 
-  const comments = await getComments(post.id);
+  const [comments, interactions] = await Promise.all([
+    getComments(post.id),
+    loadInteractionState({ postIds: [post.id] }),
+  ]);
   const meta = postTypeMeta(post.type);
+  const signedIn = Boolean(currentUser);
+  const liked = interactions.likedPostIds.has(post.id);
+  const bookmarked = interactions.bookmarkedPostIds.has(post.id);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -160,19 +170,30 @@ export default async function PostDetailPage({
                   </div>
                 </div>
               </div>
-              <div className="ml-auto flex items-center gap-3 tabular-nums">
+              <div className="ml-auto flex items-center gap-2 tabular-nums">
                 <span className="inline-flex items-center gap-1">
                   <Eye className="size-3" />
                   {post.views}
                 </span>
                 <span className="inline-flex items-center gap-1">
-                  <Heart className="size-3" />
-                  {post.likeCount}
-                </span>
-                <span className="inline-flex items-center gap-1">
                   <MessageCircle className="size-3" />
                   {post.commentCount}
                 </span>
+                <LikeButton
+                  target={{ kind: "post", id: post.id }}
+                  initialActive={liked}
+                  initialCount={post.likeCount}
+                  signedIn={signedIn}
+                  size="md"
+                  variant="solid"
+                />
+                <BookmarkButton
+                  target={{ kind: "post", id: post.id }}
+                  initialActive={bookmarked}
+                  signedIn={signedIn}
+                  size="md"
+                  variant="solid"
+                />
               </div>
             </div>
 

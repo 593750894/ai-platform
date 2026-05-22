@@ -6,6 +6,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { PostCard, type PostCardData } from "@/components/feed/post-card";
 import { prisma } from "@/lib/db";
+import { getSession } from "@/lib/auth/session";
+import { loadInteractionState } from "@/lib/interactions/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +58,11 @@ export default async function ChannelDetailPage({
   if (!channel) notFound();
 
   const posts = await getChannelPosts(channelId);
+  const session = await getSession();
+  const interactions = await loadInteractionState({
+    postIds: posts.map((p) => p.id),
+  });
+  const signedIn = Boolean(session);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -148,7 +155,12 @@ export default async function ChannelDetailPage({
             <ul className="space-y-3">
               {posts.map((post) => (
                 <li key={post.id} id={`post-${post.id}`}>
-                  <PostCard post={post} />
+                  <PostCard
+                    post={post}
+                    signedIn={signedIn}
+                    liked={interactions.likedPostIds.has(post.id)}
+                    bookmarked={interactions.bookmarkedPostIds.has(post.id)}
+                  />
                 </li>
               ))}
             </ul>

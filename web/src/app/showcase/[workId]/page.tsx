@@ -15,7 +15,13 @@ import {
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { WorkCard, type Work } from "@/components/feed/work-card";
+import {
+  BookmarkButton,
+  LikeButton,
+} from "@/components/feed/interaction-buttons";
+import { getSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { loadInteractionState } from "@/lib/interactions/queries";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import {
   authorTintFromName,
@@ -80,7 +86,17 @@ export default async function WorkDetailPage({
     data: { views: { increment: 1 } },
   });
 
-  const moreWorks = await getMoreFromAuthor(work.authorId, work.id);
+  const [moreWorks, session] = await Promise.all([
+    getMoreFromAuthor(work.authorId, work.id),
+    getSession(),
+  ]);
+  const moreIds = moreWorks.map((w) => w.id);
+  const interactions = await loadInteractionState({
+    workIds: [work.id, ...moreIds],
+  });
+  const signedIn = Boolean(session);
+  const liked = interactions.likedWorkIds.has(work.id);
+  const bookmarked = interactions.bookmarkedWorkIds.has(work.id);
   const aspect =
     work.ratio === "9:16"
       ? "aspect-[9/16] sm:max-w-md sm:mx-auto"
@@ -161,17 +177,28 @@ export default async function WorkDetailPage({
                   {work.views} 次观看
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <Heart className="size-3.5" />
-                  {work.likeCount} 个点赞
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Bookmark className="size-3.5" />
-                  {work.bookmarkCount} 个收藏
-                </span>
-                <span className="inline-flex items-center gap-1.5">
                   <Clock className="size-3.5" />
                   {formatRelativeTime(work.createdAt)}
                 </span>
+                <div className="ml-auto flex items-center gap-2">
+                  <LikeButton
+                    target={{ kind: "work", id: work.id }}
+                    initialActive={liked}
+                    initialCount={work.likeCount}
+                    signedIn={signedIn}
+                    size="md"
+                    variant="solid"
+                  />
+                  <BookmarkButton
+                    target={{ kind: "work", id: work.id }}
+                    initialActive={bookmarked}
+                    initialCount={work.bookmarkCount}
+                    signedIn={signedIn}
+                    showCount
+                    size="md"
+                    variant="solid"
+                  />
+                </div>
               </div>
 
               {/* 简介 */}
@@ -260,7 +287,15 @@ export default async function WorkDetailPage({
                     author: w.author.name,
                     authorId: w.author.id,
                   };
-                  return <WorkCard key={w.id} work={item} />;
+                  return (
+                    <WorkCard
+                      key={w.id}
+                      work={item}
+                      signedIn={signedIn}
+                      liked={interactions.likedWorkIds.has(w.id)}
+                      bookmarked={interactions.bookmarkedWorkIds.has(w.id)}
+                    />
+                  );
                 })}
               </div>
             </section>
