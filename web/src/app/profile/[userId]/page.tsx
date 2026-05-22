@@ -8,6 +8,7 @@ import {
   Film,
   Heart,
   Mail,
+  MessageSquare,
   Sparkles,
   Wrench,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { PageHeader } from "@/components/layout/page-header";
 import { ProfileEditDialog } from "@/components/auth/profile-edit-dialog";
+import { startConversationAction } from "@/lib/messages/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -97,7 +99,18 @@ export default async function ProfilePage({
                 </button>
               }
             />
-          ) : null
+          ) : (
+            <form action={startConversationAction}>
+              <input type="hidden" name="targetUserId" value={user.id} />
+              <button
+                type="submit"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                <MessageSquare className="size-3.5" />
+                私信
+              </button>
+            </form>
+          )
         }
       />
 
