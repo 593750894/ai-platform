@@ -107,22 +107,59 @@ const CHANNELS = [
   { slug: "newbie", name: "新手入门", description: "踩坑、提问、互助", icon: "🌱", color: "#86efac" },
 ] as const;
 
+// category 取自 src/lib/tools/categories.ts 的 11 个 enum-like 字符串。
+// 与该文件保持一致；新增分类时两边一起改。
 const TOOLS = [
-  { slug: "seedance-2-0", name: "Seedance 2.0", category: "视频生成", url: "https://www.volcengine.com/product/seedance", pricing: ToolPricing.PAID, tags: ["视频", "火山方舟"], official: true, desc: "火山方舟出品的高质量视频生成模型，支持文生/图生/首尾帧/多模态参考。" },
-  { slug: "seedance-fast", name: "Seedance Fast", category: "视频生成", url: "https://www.volcengine.com/product/seedance", pricing: ToolPricing.PAID, tags: ["视频", "快"], official: true, desc: "Seedance 系列轻量版，速度优先。" },
-  { slug: "runway-gen3", name: "Runway Gen-3", category: "视频生成", url: "https://runwayml.com", pricing: ToolPricing.FREEMIUM, tags: ["视频"], official: false, desc: "Runway 的旗舰生成模型，电影化运镜出彩。" },
-  { slug: "kling", name: "Kling AI", category: "视频生成", url: "https://klingai.com", pricing: ToolPricing.FREEMIUM, tags: ["视频"], official: false, desc: "可灵 AI，物理一致性表现不错。" },
-  { slug: "veo3", name: "Veo 3", category: "视频生成", url: "https://deepmind.google/technologies/veo/", pricing: ToolPricing.PAID, tags: ["视频", "Google"], official: false, desc: "Google DeepMind 的高保真视频模型。" },
-  { slug: "midjourney", name: "Midjourney", category: "图像生成", url: "https://midjourney.com", pricing: ToolPricing.PAID, tags: ["图像"], official: false, desc: "高质量风格化图像生成，常用于首尾帧素材。" },
-  { slug: "flux", name: "Flux", category: "图像生成", url: "https://blackforestlabs.ai", pricing: ToolPricing.FREEMIUM, tags: ["图像", "开源"], official: false, desc: "Black Forest Labs 出品，可控性强。" },
-  { slug: "comfyui", name: "ComfyUI", category: "工作流", url: "https://www.comfy.org/", pricing: ToolPricing.FREE, tags: ["工作流", "开源"], official: false, desc: "节点式 AI 工作流编辑器。" },
-  { slug: "tripo", name: "Tripo 3D", category: "3D", url: "https://www.tripo3d.ai", pricing: ToolPricing.FREEMIUM, tags: ["3D"], official: false, desc: "图片/文本 → 3D 模型，可衔接动画工作流。" },
-  { slug: "suno", name: "Suno", category: "音频", url: "https://suno.com", pricing: ToolPricing.FREEMIUM, tags: ["音频"], official: false, desc: "AI 音乐生成，MV 配乐利器。" },
-  { slug: "elevenlabs", name: "ElevenLabs", category: "音频", url: "https://elevenlabs.io", pricing: ToolPricing.FREEMIUM, tags: ["音频", "TTS"], official: false, desc: "高质量语音合成。" },
-  { slug: "topaz-video-ai", name: "Topaz Video AI", category: "后期", url: "https://www.topazlabs.com/topaz-video-ai", pricing: ToolPricing.PAID, tags: ["后期", "超分"], official: false, desc: "AI 视频超分与稳定。" },
-  { slug: "davinci-resolve", name: "DaVinci Resolve", category: "后期", url: "https://www.blackmagicdesign.com/products/davinciresolve", pricing: ToolPricing.FREEMIUM, tags: ["剪辑", "调色"], official: false, desc: "免费版已足够大多数 AI 视频剪辑。" },
-  { slug: "after-effects", name: "After Effects", category: "后期", url: "https://www.adobe.com/products/aftereffects.html", pricing: ToolPricing.PAID, tags: ["合成", "VFX"], official: false, desc: "Adobe 经典合成工具。" },
-  { slug: "luma-dream-machine", name: "Luma Dream Machine", category: "视频生成", url: "https://lumalabs.ai/dream-machine", pricing: ToolPricing.FREEMIUM, tags: ["视频"], official: false, desc: "Luma 旗下的视频生成模型。" },
+  // 文生视频
+  { slug: "seedance-2-0", name: "Seedance 2.0", category: "TEXT_TO_VIDEO", url: "https://www.volcengine.com/product/seedance", pricing: ToolPricing.PAID, tags: ["文生视频", "火山方舟", "首尾帧"], official: true, desc: "火山方舟出品的高质量视频生成模型，支持文生/图生/首尾帧/多模态参考。", useCase: "中长片 / 广告 / 短剧首选，对运镜与一致性敏感的项目" },
+  { slug: "seedance-fast", name: "Seedance Fast", category: "TEXT_TO_VIDEO", url: "https://www.volcengine.com/product/seedance", pricing: ToolPricing.PAID, tags: ["文生视频", "快速出片"], official: true, desc: "Seedance 系列轻量版，速度优先，单镜头几十秒出片。", useCase: "电商批量短视频、海量素材打样" },
+  { slug: "veo3", name: "Veo 3", category: "TEXT_TO_VIDEO", url: "https://deepmind.google/technologies/veo/", pricing: ToolPricing.PAID, tags: ["文生视频", "Google"], official: false, desc: "Google DeepMind 的高保真视频模型，物理真实度行业领先。", useCase: "对物理一致性要求高的场景：流体、布料、动物" },
+  { slug: "pika-2", name: "Pika 2.0", category: "TEXT_TO_VIDEO", url: "https://pika.art", pricing: ToolPricing.FREEMIUM, tags: ["文生视频"], official: false, desc: "Pika Labs 出品，风格化与快速迭代友好。", useCase: "二创、Meme 视频、社媒爆款" },
+
+  // 图生视频
+  { slug: "runway-gen3", name: "Runway Gen-3", category: "IMAGE_TO_VIDEO", url: "https://runwayml.com", pricing: ToolPricing.FREEMIUM, tags: ["图生视频", "电影感"], official: false, desc: "Runway 的旗舰生成模型，电影化运镜出彩。", useCase: "MV / 短片 / 角色一致性场景" },
+  { slug: "kling", name: "Kling AI", category: "IMAGE_TO_VIDEO", url: "https://klingai.com", pricing: ToolPricing.FREEMIUM, tags: ["图生视频", "人像"], official: false, desc: "可灵 AI，人像与物理一致性表现不错。", useCase: "真实人像驱动、短剧主角镜头" },
+  { slug: "luma-dream-machine", name: "Luma Dream Machine", category: "IMAGE_TO_VIDEO", url: "https://lumalabs.ai/dream-machine", pricing: ToolPricing.FREEMIUM, tags: ["图生视频"], official: false, desc: "Luma 旗下的视频生成模型，自然运镜流畅。", useCase: "自然风景、慢节奏镜头" },
+
+  // 视频转视频
+  { slug: "runway-act-one", name: "Runway Act-One", category: "VIDEO_TO_VIDEO", url: "https://runwayml.com", pricing: ToolPricing.PAID, tags: ["视频转视频", "动作迁移"], official: false, desc: "用一段表演视频驱动另一个角色的表情和动作。", useCase: "数字替身表演 / 角色驱动" },
+  { slug: "topaz-video-ai", name: "Topaz Video AI", category: "VIDEO_TO_VIDEO", url: "https://www.topazlabs.com/topaz-video-ai", pricing: ToolPricing.PAID, tags: ["超分", "稳定"], official: false, desc: "AI 视频超分、补帧、稳定。", useCase: "老素材修复、4K 上抽" },
+
+  // 数字人
+  { slug: "heygen", name: "HeyGen", category: "DIGITAL_HUMAN", url: "https://heygen.com", pricing: ToolPricing.PAID, tags: ["数字人", "口型"], official: false, desc: "数字人形象 + 口型驱动，多语言支持。", useCase: "口播 / 培训 / 电商短视频" },
+  { slug: "synthesia", name: "Synthesia", category: "DIGITAL_HUMAN", url: "https://www.synthesia.io", pricing: ToolPricing.PAID, tags: ["数字人", "企业级"], official: false, desc: "企业培训和营销视频的数字人平台。", useCase: "海外 B 端培训视频" },
+  { slug: "seedland-digital-human", name: "数字人定制（私域）", category: "DIGITAL_HUMAN", url: "/tools/character", pricing: ToolPricing.PAID, tags: ["数字人", "私域"], official: true, desc: "上传素材生成专属数字人形象，邀测中。", useCase: "私域口播、品牌专属主播" },
+
+  // 配音
+  { slug: "elevenlabs", name: "ElevenLabs", category: "VOICE", url: "https://elevenlabs.io", pricing: ToolPricing.FREEMIUM, tags: ["TTS", "声音克隆"], official: false, desc: "高质量语音合成 + 多语言声音克隆。", useCase: "口播 / 角色配音 / 多语言版本" },
+  { slug: "openai-tts", name: "OpenAI TTS", category: "VOICE", url: "https://platform.openai.com/docs/guides/text-to-speech", pricing: ToolPricing.PAID, tags: ["TTS"], official: false, desc: "OpenAI 出品的语音合成模型。", useCase: "海外内容、低成本量产" },
+
+  // 字幕
+  { slug: "captionai", name: "Caption.ai", category: "SUBTITLE", url: "https://www.captions.ai", pricing: ToolPricing.FREEMIUM, tags: ["字幕", "AI 剪辑"], official: false, desc: "自动识别字幕 + 自动剪辑组合工具。", useCase: "短视频字幕、爆款节奏" },
+  { slug: "submagic", name: "Submagic", category: "SUBTITLE", url: "https://submagic.co", pricing: ToolPricing.FREEMIUM, tags: ["字幕", "短视频"], official: false, desc: "短视频专用字幕样式与动效。", useCase: "TikTok / Reels 字幕动效" },
+
+  // 剪辑
+  { slug: "capcut", name: "剪映专业版", category: "EDIT", url: "https://www.capcut.cn/", pricing: ToolPricing.FREEMIUM, tags: ["剪辑", "字节"], official: false, desc: "字节出品，时间线 + AI 配乐 + 自动字幕。", useCase: "短视频 / 一人剪辑流水线" },
+  { slug: "davinci-resolve", name: "DaVinci Resolve", category: "EDIT", url: "https://www.blackmagicdesign.com/products/davinciresolve", pricing: ToolPricing.FREEMIUM, tags: ["剪辑", "调色"], official: false, desc: "免费版已足够大多数 AI 视频剪辑，调色行业标准。", useCase: "调色 / 长片剪辑 / 商业出片" },
+  { slug: "premiere-pro", name: "Premiere Pro", category: "EDIT", url: "https://www.adobe.com/products/premiere.html", pricing: ToolPricing.PAID, tags: ["剪辑", "Adobe"], official: false, desc: "Adobe 经典剪辑软件，团队协作友好。", useCase: "团队协作剪辑 / 长片" },
+
+  // 工作流
+  { slug: "comfyui", name: "ComfyUI", category: "WORKFLOW", url: "https://www.comfy.org/", pricing: ToolPricing.FREE, tags: ["工作流", "开源", "节点图"], official: false, desc: "节点式 AI 工作流编辑器，社区生态丰富。", useCase: "自动化批量生产 / 图像/视频流水线" },
+  { slug: "seedland-lora-train", name: "LoRA 训练（官方）", category: "WORKFLOW", url: "/tools/lora", pricing: ToolPricing.PAID, tags: ["LoRA", "微调"], official: true, desc: "上传素材，云端微调专属模型。", useCase: "品牌专属风格 / 角色微调" },
+
+  // 图像生成
+  { slug: "midjourney", name: "Midjourney v7", category: "IMAGE_GEN", url: "https://midjourney.com", pricing: ToolPricing.PAID, tags: ["图像", "艺术风格"], official: false, desc: "高质量风格化图像生成，常用于首尾帧素材。", useCase: "概念图 / 首尾帧 / 艺术风格图" },
+  { slug: "flux", name: "FLUX.1 Pro", category: "IMAGE_GEN", url: "https://blackforestlabs.ai", pricing: ToolPricing.FREEMIUM, tags: ["图像", "开源"], official: false, desc: "Black Forest Labs 出品，高保真且可控性强。", useCase: "ControlNet / LoRA 高保真出图" },
+  { slug: "stable-diffusion-xl", name: "Stable Diffusion XL", category: "IMAGE_GEN", url: "https://stability.ai", pricing: ToolPricing.FREE, tags: ["图像", "开源"], official: false, desc: "开源 SD 系列，可本地部署 + 自定义。", useCase: "本地化部署 / 自训练 / 二次开发" },
+
+  // 3D 生成
+  { slug: "tripo-3d", name: "Tripo 3D", category: "THREE_D", url: "https://www.tripo3d.ai", pricing: ToolPricing.FREEMIUM, tags: ["3D", "图生模型"], official: false, desc: "图片/文本 → 3D 模型，可衔接动画工作流。", useCase: "AI 视频中的 3D 资产、UE5/Blender 素材" },
+  { slug: "meshy", name: "Meshy", category: "THREE_D", url: "https://www.meshy.ai", pricing: ToolPricing.FREEMIUM, tags: ["3D", "纹理"], official: false, desc: "3D 模型生成 + 纹理迭代，速度快。", useCase: "游戏 / 数字资产快速原型" },
+
+  // 音乐音效
+  { slug: "suno", name: "Suno v4", category: "MUSIC", url: "https://suno.com", pricing: ToolPricing.FREEMIUM, tags: ["音乐", "演唱"], official: false, desc: "AI 编曲 + 演唱，MV 配乐利器。", useCase: "MV / 短剧 OST / 抖音配乐" },
+  { slug: "udio", name: "Udio", category: "MUSIC", url: "https://udio.com", pricing: ToolPricing.FREEMIUM, tags: ["音乐"], official: false, desc: "高质量 AI 音乐生成，结构感强。", useCase: "完整曲目结构 / Demo 创作" },
+  { slug: "elevenlabs-sfx", name: "ElevenLabs SFX", category: "MUSIC", url: "https://elevenlabs.io/sound-effects", pricing: ToolPricing.FREEMIUM, tags: ["音效", "SFX"], official: false, desc: "文本生成音效，秒级出 SFX。", useCase: "短视频音效 / 游戏 SFX" },
 ] as const;
 
 const POST_TEMPLATES: Array<{
@@ -364,6 +401,7 @@ async function main() {
           description: t.desc,
           url: t.url,
           category: t.category,
+          useCase: t.useCase,
           pricing: t.pricing,
           tags: [...t.tags],
           isOfficial: t.official,

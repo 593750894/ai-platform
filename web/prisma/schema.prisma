@@ -289,6 +289,7 @@ model Tool {
   description String
   url         String
   category    String
+  useCase     String?     @map("use_case") // 适合场景，例 "电商种草 / 5 秒短广告"
   logoUrl     String?     @map("logo_url")
   pricing     ToolPricing @default(FREE)
   tags        String[]
