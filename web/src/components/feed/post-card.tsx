@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Eye, ImageIcon, MessageCircle, Pin, Play } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { postTypeMeta, type PostTypeValue } from "@/lib/post-types";
 import {
@@ -54,8 +55,8 @@ export function PostCard({
   return (
     <article
       className={cn(
-        "group rounded-xl border border-border/60 bg-card/40 p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card/70",
-        post.pinned && "border-amber-500/40 bg-amber-500/5",
+        "group surface-card surface-card-hover p-4 transition-all hover:-translate-y-0.5",
+        post.pinned && "border-amber-500/40 bg-amber-500/5 hover:border-amber-500/60",
       )}
     >
       <div className="flex items-center gap-2 text-[11px]">
@@ -68,10 +69,10 @@ export function PostCard({
           {meta.label}
         </span>
         {post.pinned && (
-          <span className="inline-flex items-center gap-1 text-amber-400">
+          <Badge variant="warning" className="gap-1">
             <Pin className="size-3" />
             置顶
-          </span>
+          </Badge>
         )}
         {showChannel && post.channel && (
           <Link
@@ -99,23 +100,23 @@ export function PostCard({
       </p>
 
       {hasMedia && (
-        <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground">
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
           {post.videoUrl && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-primary">
+            <Badge variant="primary">
               <Play className="size-3" />
               视频
-            </span>
+            </Badge>
           )}
           {post.imageUrl && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-cyan-500/10 px-2 py-0.5 text-cyan-300">
+            <Badge variant="cyan">
               <ImageIcon className="size-3" />
               图片
-            </span>
+            </Badge>
           )}
         </div>
       )}
 
-      <div className="mt-3 flex items-center gap-3 border-t border-border/40 pt-3 text-xs text-muted-foreground">
+      <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border/40 pt-3 text-xs text-muted-foreground">
         <div className="flex items-center gap-2">
           {post.author.avatar ? (
             // eslint-disable-next-line @next/next/no-img-element

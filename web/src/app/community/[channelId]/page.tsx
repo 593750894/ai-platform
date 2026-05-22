@@ -4,6 +4,7 @@ import { ArrowLeft, MessageSquare, Sparkles, Users } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PostCard, type PostCardData } from "@/components/feed/post-card";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
@@ -98,8 +99,8 @@ export default async function ChannelDetailPage({
         }
       />
 
-      <div className="space-y-5 px-6 py-6 sm:px-8">
-        <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border/60 bg-card/30 px-4 py-3 text-xs text-muted-foreground">
+      <div className="space-y-5 px-4 py-5 sm:px-8 sm:py-6">
+        <div className="surface-card flex flex-wrap items-center gap-4 px-4 py-3 text-xs text-muted-foreground">
           <span
             className="flex size-10 items-center justify-center rounded-lg text-xl"
             style={{
@@ -135,16 +136,21 @@ export default async function ChannelDetailPage({
         </div>
 
         {posts.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border/60 bg-card/30 px-6 py-12 text-center text-sm text-muted-foreground">
-            <p>这个频道还没有帖子。</p>
-            <Link
-              href={`/create-post?channelId=${channel.id}`}
-              className="mt-3 inline-flex items-center gap-1 text-primary hover:underline"
-            >
-              <Sparkles className="size-3.5" />
-              发布第一帖
-            </Link>
-          </div>
+          <EmptyState
+            icon={MessageSquare}
+            title="这个频道还没有帖子"
+            description="成为第一个在这个频道发帖的人，分享你的工作流或问题。"
+            action={
+              <Button
+                size="sm"
+                nativeButton={false}
+                render={<Link href={`/create-post?channelId=${channel.id}`} />}
+              >
+                <Sparkles className="size-3.5" />
+                发布第一帖
+              </Button>
+            }
+          />
         ) : (
           <div className="space-y-3">
             <div className="flex items-center justify-between">

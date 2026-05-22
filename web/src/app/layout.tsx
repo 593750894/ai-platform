@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { MobileBottomNav } from "@/components/layout/mobile-nav";
 import { Navbar } from "@/components/layout/navbar";
 import { RightPanel } from "@/components/layout/right-panel";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -19,9 +20,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SeedLand · V — AI 视频创作社区",
+  title: "SeedLand · V — AI 视频创作者的内容社区",
   description:
-    "面向 AI 视频创作者的内容社区与协作工作台：作品广场、项目合作、工具库、模型评测一站式打通。",
+    "围绕 Seedance 2.0 与主流视频大模型的 AI 视频创作社区：作品广场、项目合作、工具库、模型评测一站式打通。",
 };
 
 export default async function RootLayout({
@@ -49,9 +50,12 @@ export default async function RootLayout({
         <Navbar user={navbarUser} />
         <div className="mx-auto flex w-full max-w-[1600px] flex-1">
           <Sidebar />
-          <main className="flex min-w-0 flex-1 flex-col">{children}</main>
+          <main className="flex min-w-0 flex-1 flex-col pb-16 lg:pb-0">
+            {children}
+          </main>
           <RightPanel />
         </div>
+        <MobileBottomNav />
       </body>
     </html>
   );

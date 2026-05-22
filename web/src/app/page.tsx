@@ -1,6 +1,15 @@
 import Link from "next/link";
-import { ArrowRight, Compass, Flame, Sparkles, Wand2 } from "lucide-react";
+import {
+  ArrowRight,
+  Compass,
+  Flame,
+  Handshake,
+  Sparkles,
+  Wand2,
+  Wrench,
+} from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DEMO_WORKS, WorkCard } from "@/components/feed/work-card";
 
@@ -17,50 +26,61 @@ const FEED_TABS = [
 
 const QUICK_ENTRIES = [
   {
-    href: "/generate",
+    href: "/create-work",
     icon: Wand2,
-    title: "开始一次视频生成",
-    desc: "文生 / 图生 / 首尾帧 / 多模态参考",
+    title: "发布我的新作品",
+    desc: "上传成片 + 简介 + 使用工具",
     tone: "from-cyan-500/20 to-blue-500/10 border-cyan-500/30",
   },
   {
-    href: "/create-work",
-    icon: Sparkles,
-    title: "发布我的新作品",
-    desc: "上传成片 + 简介 + 使用工具",
+    href: "/community",
+    icon: Compass,
+    title: "进入社区",
+    desc: "教程 / 工作流 / 行业讨论",
     tone: "from-fuchsia-500/20 to-purple-500/10 border-fuchsia-500/30",
   },
   {
     href: "/collaboration",
-    icon: Compass,
+    icon: Handshake,
     title: "找伙伴 / 接项目",
     desc: "导演、编剧、合成师、配音正在招募",
     tone: "from-amber-500/20 to-rose-500/10 border-amber-500/30",
+  },
+  {
+    href: "/tools",
+    icon: Wrench,
+    title: "工具库导航",
+    desc: "Seedance · Kling · ComfyUI · Suno",
+    tone: "from-emerald-500/20 to-teal-500/10 border-emerald-500/30",
   },
 ];
 
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
-      <section className="relative isolate overflow-hidden border-b border-border/60 px-6 py-8 sm:px-8">
+      <section className="relative isolate overflow-hidden border-b border-border/60 px-4 py-8 sm:px-8 sm:py-10">
         <div className="absolute inset-0 -z-10 bg-grid opacity-40 [mask-image:radial-gradient(ellipse_at_top,black,transparent_75%)]" />
         <div className="absolute inset-x-0 -top-20 -z-10 mx-auto h-72 max-w-3xl rounded-full bg-primary/20 blur-3xl" />
 
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-4">
+            <Badge variant="primary" size="lg">
               <Flame className="size-3" />
-              Phase 2 · 社区与协作平台
-            </span>
-            <h1 className="max-w-2xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-              <span className="bg-gradient-to-r from-cyan-200 via-foreground to-fuchsia-200 bg-clip-text text-transparent">
-                AI 视频创作者
+              AI 视频创作者社区
+            </Badge>
+            <h1 className="max-w-2xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+              <span className="text-gradient-brand">
+                看作品
               </span>
-              的内容社区
+              ·
+              <span className="text-gradient-brand">
+                聊工作流
+              </span>
+              <br className="hidden sm:block" />
+              <span>组团队</span> · <span>接项目</span>
             </h1>
             <p className="max-w-xl text-sm text-muted-foreground sm:text-base">
-              围绕 Seedance 2.0 与主流视频大模型，连接导演、动画师、特效师与创作团队。
-              在这里看作品、聊工作流、组团队、接项目。
+              围绕 Seedance 2.0 与主流视频大模型，连接导演、动画师、特效师与创作团队。一站式作品广场、社区论坛、项目合作、工具库与模型评测。
             </p>
           </div>
 
@@ -68,24 +88,25 @@ export default function Home() {
             <Button
               size="lg"
               nativeButton={false}
-              render={<Link href="/generate" />}
+              render={<Link href="/create-work" />}
             >
               <Wand2 className="size-4" />
-              开始创作
+              发布作品
               <ArrowRight className="size-4" />
             </Button>
             <Button
               size="lg"
               variant="outline"
               nativeButton={false}
-              render={<Link href="/community" />}
+              render={<Link href="/showcase" />}
             >
-              探索社区
+              <Sparkles className="size-4" />
+              浏览广场
             </Button>
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {QUICK_ENTRIES.map(({ href, icon: Icon, title, desc, tone }) => (
             <Link
               key={href}
@@ -101,8 +122,8 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="flex flex-col gap-4 px-6 py-6 sm:px-8">
-        <div className="sticky top-14 z-20 -mx-6 flex items-center gap-1 overflow-x-auto border-b border-border/40 bg-background/85 px-6 py-2 backdrop-blur sm:-mx-8 sm:px-8">
+      <section className="flex flex-col gap-4 px-4 py-6 sm:px-8">
+        <div className="sticky top-14 z-20 -mx-4 flex items-center gap-1 overflow-x-auto border-b border-border/40 bg-background/85 px-4 py-2 backdrop-blur scroll-x-snap sm:-mx-8 sm:px-8">
           {FEED_TABS.map((t) => (
             <button
               key={t.label}
@@ -117,13 +138,13 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4">
           {DEMO_WORKS.map((w) => (
             <WorkCard key={w.id} work={w} />
           ))}
         </div>
 
-        <div className="mt-4 flex justify-center">
+        <div className="mt-2 flex justify-center">
           <Button
             variant="outline"
             size="lg"

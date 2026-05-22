@@ -1,13 +1,14 @@
 import Link from "next/link";
-import { Filter, Flame, Sparkles, Upload } from "lucide-react";
+import { Filter, Flame, Sparkles, Upload, Video } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FilterChip } from "@/components/ui/filter-chip";
 import { WorkCard, type Work } from "@/components/feed/work-card";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { loadInteractionState } from "@/lib/interactions/queries";
-import { cn } from "@/lib/utils";
 import {
   WORK_CATEGORY_ORDER,
   workCategoryMeta,
@@ -91,7 +92,7 @@ export default async function ShowcasePage({
     <div className="flex flex-1 flex-col">
       <PageHeader
         eyebrow="作品广场"
-        title="Showcase · AI 视频作品展示区"
+        title="Showcase · AI 视频作品展示"
         description="社区全部公开的 AI 视频作品，按发布时间排序。点击卡片进入详情页可看完整简介、使用工具、原始视频。"
         actions={
           <>
@@ -116,8 +117,8 @@ export default async function ShowcasePage({
         }
       />
 
-      <div className="space-y-5 px-6 py-6 sm:px-8">
-        <section className="rounded-xl border border-border/60 bg-card/40 p-4">
+      <div className="space-y-5 px-4 py-5 sm:px-8 sm:py-6">
+        <section className="surface-card p-4">
           <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             <Filter className="size-3.5" />
             作品分类
@@ -125,8 +126,8 @@ export default async function ShowcasePage({
               · 共 {total} 个公开作品
             </span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <CategoryChip
+          <div className="-mx-1 flex flex-nowrap gap-2 overflow-x-auto px-1 scroll-x-snap sm:flex-wrap sm:overflow-visible">
+            <FilterChip
               href="/showcase"
               active={!activeCategory}
               label="全部"
@@ -136,7 +137,7 @@ export default async function ShowcasePage({
             {WORK_CATEGORY_ORDER.map((c) => {
               const meta = workCategoryMeta(c);
               return (
-                <CategoryChip
+                <FilterChip
                   key={c}
                   href={`/showcase?category=${c}`}
                   active={activeCategory === c}
@@ -175,9 +176,41 @@ export default async function ShowcasePage({
         </section>
 
         {items.length === 0 ? (
-          <EmptyState hasFilter={!!activeCategory} />
+          <EmptyState
+            icon={Video}
+            title={
+              activeCategory ? "该分类下还没有作品" : "作品广场还没有任何作品"
+            }
+            description={
+              activeCategory
+                ? "换一个分类看看，或者第一个发布你的 AI 视频作品。"
+                : "成为第一个发布作品的创作者，让你的 AI 视频被社区看到。"
+            }
+            action={
+              <>
+                {activeCategory && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    nativeButton={false}
+                    render={<Link href="/showcase" />}
+                  >
+                    查看全部分类
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  nativeButton={false}
+                  render={<Link href="/create-work" />}
+                >
+                  <Upload className="size-3.5" />
+                  发布作品
+                </Button>
+              </>
+            }
+          />
         ) : (
-          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <section className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4">
             {items.map((w) => (
               <WorkCard
                 key={w.id}
@@ -189,70 +222,6 @@ export default async function ShowcasePage({
             ))}
           </section>
         )}
-      </div>
-    </div>
-  );
-}
-
-function CategoryChip({
-  href,
-  active,
-  label,
-  count,
-  tone,
-}: {
-  href: string;
-  active: boolean;
-  label: string;
-  count: number;
-  tone: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors",
-        active
-          ? `${tone} ring-1 ring-primary/40`
-          : "border-border/60 bg-card/40 text-muted-foreground hover:border-primary/30 hover:text-foreground",
-      )}
-    >
-      <span>{label}</span>
-      <span
-        className={cn(
-          "rounded-full px-1.5 text-[10px] tabular-nums",
-          active ? "bg-white/10" : "bg-muted/60",
-        )}
-      >
-        {count}
-      </span>
-    </Link>
-  );
-}
-
-function EmptyState({ hasFilter }: { hasFilter: boolean }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-10 text-center">
-      <p className="text-sm text-muted-foreground">
-        {hasFilter
-          ? "该分类下还没有作品。换一个分类，或者第一个发布吧。"
-          : "作品广场还没有任何作品，欢迎发布你的第一支 AI 视频。"}
-      </p>
-      <div className="mt-4 inline-flex gap-2">
-        {hasFilter && (
-          <Button
-            variant="outline"
-            size="sm"
-            nativeButton={false}
-            render={<Link href="/showcase" />}
-          >
-            查看全部分类
-          </Button>
-        )}
-        <Button size="sm" nativeButton={false} render={<Link href="/create-work" />}>
-          <Upload className="size-3.5" />
-          发布作品
-        </Button>
       </div>
     </div>
   );

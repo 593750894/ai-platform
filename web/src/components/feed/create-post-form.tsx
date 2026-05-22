@@ -2,6 +2,9 @@
 
 import { useActionState, useState } from "react";
 
+import { FormError, FormField } from "@/components/ui/field";
+import { Input, Select, Textarea } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 import {
   POST_TYPE_META,
@@ -31,15 +34,22 @@ export function CreatePostForm({
 }) {
   const [state, action, pending] = useActionState(createPostAction, initial);
   const [selectedType, setSelectedType] = useState<PostTypeValue>("DISCUSSION");
+  const [titleLen, setTitleLen] = useState(0);
+  const [contentLen, setContentLen] = useState(0);
 
   return (
     <form action={action} className="space-y-5">
-      <Section title="频道" error={state.fieldErrors?.channelId?.[0]}>
-        <select
+      <FormField
+        label="频道"
+        htmlFor="channelId"
+        required
+        error={state.fieldErrors?.channelId}
+      >
+        <Select
+          id="channelId"
           name="channelId"
           defaultValue={defaultChannelId ?? ""}
           required
-          className="block h-10 w-full rounded-lg border border-border/60 bg-background px-3 text-sm outline-none transition-colors focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
         >
           <option value="" disabled>
             请选择频道
@@ -49,10 +59,15 @@ export function CreatePostForm({
               {(c.icon ?? "#") + " " + c.name} · {c.slug}
             </option>
           ))}
-        </select>
-      </Section>
+        </Select>
+      </FormField>
 
-      <Section title="帖子类型" error={state.fieldErrors?.type?.[0]}>
+      <FormField
+        label="帖子类型"
+        required
+        error={state.fieldErrors?.type}
+        hint="选择一个最贴近主题的类型，便于读者过滤"
+      >
         <input type="hidden" name="type" value={selectedType} />
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {POST_TYPE_ORDER.map((t) => {
@@ -78,55 +93,79 @@ export function CreatePostForm({
             );
           })}
         </div>
-      </Section>
+      </FormField>
 
-      <Section title="标题" error={state.fieldErrors?.title?.[0]} required>
-        <input
+      <FormField
+        label="标题"
+        htmlFor="title"
+        required
+        error={state.fieldErrors?.title}
+        hint={`一句话说清楚你想分享什么 · ${titleLen}/120`}
+      >
+        <Input
+          id="title"
           name="title"
           required
           maxLength={120}
-          placeholder="一句话说清楚你想分享什么"
-          className="block h-10 w-full rounded-lg border border-border/60 bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+          onChange={(e) => setTitleLen(e.target.value.length)}
+          placeholder="例：可灵 2.0 vs Seedance 真人同 prompt 对比记录"
+          aria-invalid={(state.fieldErrors?.title?.length ?? 0) > 0 || undefined}
         />
-      </Section>
+      </FormField>
 
-      <Section title="正文" error={state.fieldErrors?.content?.[0]} required>
-        <textarea
+      <FormField
+        label="正文"
+        htmlFor="content"
+        required
+        error={state.fieldErrors?.content}
+        hint={`支持纯文本，不支持 markdown 渲染 · ${contentLen}/8000`}
+      >
+        <Textarea
+          id="content"
           name="content"
           required
           rows={8}
           maxLength={8000}
-          placeholder="把你的工作流、prompt、感受讲清楚。支持纯文本，不支持 markdown 渲染。"
-          className="block w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm leading-relaxed outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+          onChange={(e) => setContentLen(e.target.value.length)}
+          placeholder="把你的工作流、prompt、感受讲清楚"
+          aria-invalid={(state.fieldErrors?.content?.length ?? 0) > 0 || undefined}
         />
-      </Section>
+      </FormField>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Section title="视频链接（可选）" error={state.fieldErrors?.videoUrl?.[0]}>
-          <input
+        <FormField
+          label="视频链接"
+          htmlFor="videoUrl"
+          hint="选填"
+          error={state.fieldErrors?.videoUrl}
+        >
+          <Input
+            id="videoUrl"
             name="videoUrl"
             type="url"
             placeholder="https://..."
-            className="block h-10 w-full rounded-lg border border-border/60 bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+            aria-invalid={(state.fieldErrors?.videoUrl?.length ?? 0) > 0 || undefined}
           />
-        </Section>
-        <Section title="图片链接（可选）" error={state.fieldErrors?.imageUrl?.[0]}>
-          <input
+        </FormField>
+        <FormField
+          label="图片链接"
+          htmlFor="imageUrl"
+          hint="选填"
+          error={state.fieldErrors?.imageUrl}
+        >
+          <Input
+            id="imageUrl"
             name="imageUrl"
             type="url"
             placeholder="https://..."
-            className="block h-10 w-full rounded-lg border border-border/60 bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+            aria-invalid={(state.fieldErrors?.imageUrl?.length ?? 0) > 0 || undefined}
           />
-        </Section>
+        </FormField>
       </div>
 
-      {state.message && !state.ok && (
-        <p className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
-          {state.message}
-        </p>
-      )}
+      {state.message && !state.ok && <FormError message={state.message} />}
 
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <button
           type="reset"
           className="inline-flex h-10 items-center justify-center rounded-lg border border-border/60 bg-background px-4 text-sm transition-colors hover:bg-muted"
@@ -136,34 +175,12 @@ export function CreatePostForm({
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
+          {pending && <Spinner className="size-4 text-primary-foreground" />}
           {pending ? "发布中…" : "发布帖子"}
         </button>
       </div>
     </form>
-  );
-}
-
-function Section({
-  title,
-  required,
-  error,
-  children,
-}: {
-  title: string;
-  required?: boolean;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium">
-        {title}
-        {required && <span className="ml-0.5 text-destructive">*</span>}
-      </label>
-      {children}
-      {error && <p className="text-xs text-destructive">{error}</p>}
-    </div>
   );
 }

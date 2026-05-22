@@ -4,6 +4,7 @@ import { MessageSquare, Settings2 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { getSession } from "@/lib/auth/session";
 import { listConversationsForUser } from "@/lib/messages/queries";
 import { formatRelativeTime } from "@/lib/utils";
@@ -32,28 +33,31 @@ export default async function MessagesPage() {
         }
       />
 
-      <div className="px-6 py-6 sm:px-8">
+      <div className="px-4 py-5 sm:px-8 sm:py-6">
         {conversations.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border/60 bg-card/20 px-6 py-16 text-center">
-            <MessageSquare className="mx-auto size-8 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">
-              你还没有任何私信。可以去
-              <Link
-                href="/showcase"
-                className="mx-1 text-primary hover:underline"
-              >
-                作品广场
-              </Link>
-              或
-              <Link
-                href="/collaboration"
-                className="mx-1 text-primary hover:underline"
-              >
-                项目合作
-              </Link>
-              发现感兴趣的创作者，从他们的主页发起对话。
-            </p>
-          </div>
+          <EmptyState
+            icon={MessageSquare}
+            title="还没有私信"
+            description={
+              <>
+                可以去
+                <Link
+                  href="/showcase"
+                  className="mx-1 text-primary hover:underline"
+                >
+                  作品广场
+                </Link>
+                或
+                <Link
+                  href="/collaboration"
+                  className="mx-1 text-primary hover:underline"
+                >
+                  项目合作
+                </Link>
+                发现感兴趣的创作者，从他们的主页发起对话。
+              </>
+            }
+          />
         ) : (
           <ul className="divide-y divide-border/40 overflow-hidden rounded-2xl border border-border/60 bg-card/30">
             {conversations.map((c) => {

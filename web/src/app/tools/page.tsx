@@ -3,9 +3,10 @@ import { Filter, Search, Sparkles, Wrench } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FilterChip } from "@/components/ui/filter-chip";
 import { ToolCard, type ToolCardItem } from "@/components/feed/tool-card";
 import { prisma } from "@/lib/db";
-import { cn } from "@/lib/utils";
 import {
   isToolCategoryValue,
   toolCategoryMeta,
@@ -117,7 +118,7 @@ export default async function ToolsPage({
                 name="q"
                 defaultValue={query}
                 placeholder="搜索工具 / 标签 / 场景..."
-                className="h-8 w-56 rounded-md border border-border/60 bg-card/40 pl-8 pr-3 text-sm outline-none focus:border-primary/50"
+                className="h-8 w-44 rounded-md border border-border/60 bg-card/40 pl-8 pr-3 text-sm focus-ring sm:w-56"
               />
             </form>
             <Button
@@ -133,9 +134,8 @@ export default async function ToolsPage({
         }
       />
 
-      <div className="space-y-5 px-6 py-6 sm:px-8">
-        {/* 分类筛选 */}
-        <section className="rounded-xl border border-border/60 bg-card/40 p-4">
+      <div className="space-y-5 px-4 py-5 sm:px-8 sm:py-6">
+        <section className="surface-card p-4">
           <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             <Filter className="size-3.5" />
             工具类型
@@ -143,8 +143,8 @@ export default async function ToolsPage({
               · 共 {total} 个{query ? `匹配 "${query}" 的` : ""}工具
             </span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <CategoryChip
+          <div className="-mx-1 flex flex-nowrap gap-2 overflow-x-auto px-1 scroll-x-snap sm:flex-wrap sm:overflow-visible">
+            <FilterChip
               href={queryWithCategory(null)}
               active={!activeCategory}
               label="全部"
@@ -155,7 +155,7 @@ export default async function ToolsPage({
             {TOOL_CATEGORY_ORDER.map((c) => {
               const meta = toolCategoryMeta(c);
               return (
-                <CategoryChip
+                <FilterChip
                   key={c}
                   href={queryWithCategory(c)}
                   active={activeCategory === c}
@@ -169,7 +169,6 @@ export default async function ToolsPage({
           </div>
         </section>
 
-        {/* 当前过滤状态 */}
         <section className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
           <div className="inline-flex items-center gap-2">
             <Sparkles className="size-4 text-primary" />
@@ -214,7 +213,31 @@ export default async function ToolsPage({
         </section>
 
         {items.length === 0 ? (
-          <EmptyState hasFilter={!!(activeCategory || query)} />
+          <EmptyState
+            icon={Wrench}
+            title={
+              activeCategory || query
+                ? "当前筛选下没有匹配工具"
+                : "工具库还没有数据"
+            }
+            description={
+              activeCategory || query
+                ? "换一个类型或关键词试试，或者前往社区工具频道推荐工具。"
+                : "等待管理员录入官方工具，或前往社区推荐你常用的工具。"
+            }
+            action={
+              (activeCategory || query) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  nativeButton={false}
+                  render={<Link href="/tools" />}
+                >
+                  清除筛选
+                </Button>
+              )
+            }
+          />
         ) : (
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {items.map((tool) => (
@@ -223,7 +246,7 @@ export default async function ToolsPage({
           </section>
         )}
 
-        <section className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-5 text-center">
+        <section className="surface-dashed p-5 text-center">
           <p className="text-sm text-muted-foreground">
             没找到合适的工具？前往社区{" "}
             <Link
@@ -236,69 +259,6 @@ export default async function ToolsPage({
           </p>
         </section>
       </div>
-    </div>
-  );
-}
-
-function CategoryChip({
-  href,
-  active,
-  label,
-  emoji,
-  count,
-  tone,
-}: {
-  href: string;
-  active: boolean;
-  label: string;
-  emoji: string;
-  count: number;
-  tone: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors",
-        active
-          ? `${tone} ring-1 ring-primary/40`
-          : "border-border/60 bg-card/40 text-muted-foreground hover:border-primary/30 hover:text-foreground",
-      )}
-    >
-      <span aria-hidden>{emoji}</span>
-      <span>{label}</span>
-      <span
-        className={cn(
-          "rounded-full px-1.5 text-[10px] tabular-nums",
-          active ? "bg-white/10" : "bg-muted/60",
-        )}
-      >
-        {count}
-      </span>
-    </Link>
-  );
-}
-
-function EmptyState({ hasFilter }: { hasFilter: boolean }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-10 text-center">
-      <p className="text-sm text-muted-foreground">
-        {hasFilter
-          ? "当前筛选条件下没有工具。换一个类型或关键词试试。"
-          : "工具库还没有数据，等待管理员录入。"}
-      </p>
-      {hasFilter && (
-        <div className="mt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            nativeButton={false}
-            render={<Link href="/tools" />}
-          >
-            清除筛选
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

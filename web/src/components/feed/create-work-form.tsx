@@ -2,6 +2,9 @@
 
 import { useActionState, useState } from "react";
 
+import { FormError, FormField } from "@/components/ui/field";
+import { Input, Textarea } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 import {
   WORK_CATEGORY_META,
@@ -35,6 +38,8 @@ export function CreateWorkForm() {
   const [selectedCategory, setSelectedCategory] =
     useState<WorkCategoryValue>("STORY");
   const [toolsInput, setToolsInput] = useState("");
+  const [titleLen, setTitleLen] = useState(0);
+  const [descLen, setDescLen] = useState(0);
 
   const appendTool = (tool: string) => {
     const parts = toolsInput
@@ -47,9 +52,14 @@ export function CreateWorkForm() {
 
   return (
     <form action={action} className="space-y-5">
-      <Section title="作品类型" error={state.fieldErrors?.category?.[0]} required>
+      <FormField
+        label="作品类型"
+        required
+        error={state.fieldErrors?.category}
+        hint="选择一个最匹配主题的分类，便于在广场页被找到"
+      >
         <input type="hidden" name="category" value={selectedCategory} />
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {WORK_CATEGORY_ORDER.map((c) => {
             const meta = WORK_CATEGORY_META[c];
             const active = selectedCategory === c;
@@ -73,65 +83,92 @@ export function CreateWorkForm() {
             );
           })}
         </div>
-      </Section>
+      </FormField>
 
-      <Section title="标题" error={state.fieldErrors?.title?.[0]} required>
-        <input
+      <FormField
+        label="标题"
+        htmlFor="title"
+        required
+        error={state.fieldErrors?.title}
+        hint={`${titleLen}/120`}
+      >
+        <Input
+          id="title"
           name="title"
           required
           maxLength={120}
+          onChange={(e) => setTitleLen(e.target.value.length)}
           placeholder="给你的作品起个名字"
-          className="block h-10 w-full rounded-lg border border-border/60 bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+          aria-invalid={(state.fieldErrors?.title?.length ?? 0) > 0 || undefined}
         />
-      </Section>
+      </FormField>
 
-      <Section title="简介" error={state.fieldErrors?.description?.[0]}>
-        <textarea
+      <FormField
+        label="简介"
+        htmlFor="description"
+        error={state.fieldErrors?.description}
+        hint={`选填 · 说一说创作背景、用了什么工具、踩过什么坑 · ${descLen}/2000`}
+      >
+        <Textarea
+          id="description"
           name="description"
           rows={4}
           maxLength={2000}
-          placeholder="说一说创作背景、用了什么工具、踩过什么坑（可选，最多 2000 字）"
-          className="block w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm leading-relaxed outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+          onChange={(e) => setDescLen(e.target.value.length)}
+          placeholder="例：短剧《潮汐》第 3 集，雨夜对话长镜头，挑战 60s 连贯 1080P"
+          aria-invalid={(state.fieldErrors?.description?.length ?? 0) > 0 || undefined}
         />
-      </Section>
+      </FormField>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Section
-          title="封面链接"
-          error={state.fieldErrors?.thumbnailUrl?.[0]}
+        <FormField
+          label="封面链接"
+          htmlFor="thumbnailUrl"
+          hint="选填，建议 16:9 静帧图"
+          error={state.fieldErrors?.thumbnailUrl}
         >
-          <input
+          <Input
+            id="thumbnailUrl"
             name="thumbnailUrl"
             type="url"
-            placeholder="https://...（可选，建议 16:9 静帧图）"
-            className="block h-10 w-full rounded-lg border border-border/60 bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+            placeholder="https://..."
+            aria-invalid={(state.fieldErrors?.thumbnailUrl?.length ?? 0) > 0 || undefined}
           />
-        </Section>
-        <Section
-          title="视频链接"
-          error={state.fieldErrors?.videoUrl?.[0]}
+        </FormField>
+        <FormField
+          label="视频链接"
+          htmlFor="videoUrl"
           required
+          hint="B 站 / YouTube / CDN 直链均可"
+          error={state.fieldErrors?.videoUrl}
         >
-          <input
+          <Input
+            id="videoUrl"
             name="videoUrl"
             type="url"
             required
-            placeholder="https://...（必填，B 站 / YouTube / CDN 直链均可）"
-            className="block h-10 w-full rounded-lg border border-border/60 bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+            placeholder="https://..."
+            aria-invalid={(state.fieldErrors?.videoUrl?.length ?? 0) > 0 || undefined}
           />
-        </Section>
+        </FormField>
       </div>
 
-      <Section title="使用工具" error={state.fieldErrors?.tools?.[0]}>
-        <input
+      <FormField
+        label="使用工具"
+        htmlFor="tools"
+        error={state.fieldErrors?.tools}
+        hint="用逗号分隔，最多 10 个"
+      >
+        <Input
+          id="tools"
           name="tools"
           value={toolsInput}
           onChange={(e) => setToolsInput(e.target.value)}
           maxLength={500}
-          placeholder="如：Seedance 2.0, Runway Gen-3, Suno（用逗号分隔，最多 10 个）"
-          className="block h-10 w-full rounded-lg border border-border/60 bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+          placeholder="如：Seedance 2.0, Runway Gen-3, Suno"
+          aria-invalid={(state.fieldErrors?.tools?.length ?? 0) > 0 || undefined}
         />
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <span className="text-[11px] text-muted-foreground">快捷添加：</span>
           {COMMON_TOOLS.map((t) => (
             <button
@@ -144,20 +181,18 @@ export function CreateWorkForm() {
             </button>
           ))}
         </div>
-      </Section>
+      </FormField>
 
-      {state.message && !state.ok && (
-        <p className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
-          {state.message}
-        </p>
-      )}
+      {state.message && !state.ok && <FormError message={state.message} />}
 
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <button
           type="reset"
           onClick={() => {
             setSelectedCategory("STORY");
             setToolsInput("");
+            setTitleLen(0);
+            setDescLen(0);
           }}
           className="inline-flex h-10 items-center justify-center rounded-lg border border-border/60 bg-background px-4 text-sm transition-colors hover:bg-muted"
         >
@@ -166,34 +201,12 @@ export function CreateWorkForm() {
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
+          {pending && <Spinner className="size-4 text-primary-foreground" />}
           {pending ? "发布中…" : "发布作品"}
         </button>
       </div>
     </form>
-  );
-}
-
-function Section({
-  title,
-  required,
-  error,
-  children,
-}: {
-  title: string;
-  required?: boolean;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium">
-        {title}
-        {required && <span className="ml-0.5 text-destructive">*</span>}
-      </label>
-      {children}
-      {error && <p className="text-xs text-destructive">{error}</p>}
-    </div>
   );
 }

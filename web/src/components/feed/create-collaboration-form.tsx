@@ -2,6 +2,9 @@
 
 import { useActionState, useState } from "react";
 
+import { FormError, FormField } from "@/components/ui/field";
+import { Input, Textarea } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/loading";
 import { cn } from "@/lib/utils";
 import {
   COLLAB_CATEGORY_META,
@@ -47,6 +50,7 @@ export function CreateCollaborationForm() {
   const [location, setLocation] = useState<CollabLocationValue>("REMOTE");
   const [tagsInput, setTagsInput] = useState("");
   const [budget, setBudget] = useState("");
+  const [descLen, setDescLen] = useState(0);
 
   const appendTag = (tag: string) => {
     const parts = tagsInput
@@ -59,8 +63,11 @@ export function CreateCollaborationForm() {
 
   return (
     <form action={action} className="space-y-5">
-      {/* 合作类型 */}
-      <Section title="合作类型" error={state.fieldErrors?.category?.[0]} required>
+      <FormField
+        label="合作类型"
+        required
+        error={state.fieldErrors?.category}
+      >
         <input type="hidden" name="category" value={category} />
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {COLLAB_CATEGORY_ORDER.map((c) => {
@@ -87,47 +94,63 @@ export function CreateCollaborationForm() {
             );
           })}
         </div>
-      </Section>
+      </FormField>
 
-      {/* 标题 */}
-      <Section title="标题" error={state.fieldErrors?.title?.[0]} required>
-        <input
+      <FormField
+        label="标题"
+        htmlFor="title"
+        required
+        error={state.fieldErrors?.title}
+        hint="一句话讲清楚：你在找什么 / 项目是什么"
+      >
+        <Input
+          id="title"
           name="title"
           required
           maxLength={80}
-          placeholder="一句话讲清楚：你在找什么 / 项目是什么"
-          className="block h-10 w-full rounded-lg border border-border/60 bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+          placeholder="例：招募短剧导演 · 6 集 AI 短剧《潮汐》第二季"
+          aria-invalid={(state.fieldErrors?.title?.length ?? 0) > 0 || undefined}
         />
-      </Section>
+      </FormField>
 
-      {/* 需求描述 */}
-      <Section title="需求描述" error={state.fieldErrors?.description?.[0]} required>
-        <textarea
+      <FormField
+        label="需求描述"
+        htmlFor="description"
+        required
+        error={state.fieldErrors?.description}
+        hint={`详细说明项目背景、交付物、工作流、时间节点 · ${descLen}/3000，至少 20 字`}
+      >
+        <Textarea
+          id="description"
           name="description"
           rows={6}
           required
           minLength={20}
           maxLength={3000}
-          placeholder={`详细说明：
-· 项目背景 / 目标观众
+          onChange={(e) => setDescLen(e.target.value.length)}
+          placeholder={`· 项目背景 / 目标观众
 · 交付物（集数、时长、画幅）
 · 工作流期望（Seedance / ComfyUI / 自定义）
 · 时间节点 / 验收标准
 · 其他特殊要求`}
-          className="block w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-sm leading-relaxed outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+          aria-invalid={(state.fieldErrors?.description?.length ?? 0) > 0 || undefined}
         />
-      </Section>
+      </FormField>
 
-      {/* 预算 + 合作方式 + 远程线下 */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Section title="预算" error={state.fieldErrors?.budget?.[0]}>
-          <input
+        <FormField
+          label="预算"
+          htmlFor="budget"
+          error={state.fieldErrors?.budget}
+        >
+          <Input
+            id="budget"
             name="budget"
             value={budget}
             onChange={(e) => setBudget(e.target.value)}
             maxLength={80}
-            placeholder="可选，例：10000-30000 元"
-            className="block h-10 w-full rounded-lg border border-border/60 bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+            placeholder="选填，例：10000-30000 元"
+            aria-invalid={(state.fieldErrors?.budget?.length ?? 0) > 0 || undefined}
           />
           <div className="mt-1.5 flex flex-wrap gap-1">
             {SUGGESTED_BUDGETS.map((b) => (
@@ -141,9 +164,13 @@ export function CreateCollaborationForm() {
               </button>
             ))}
           </div>
-        </Section>
+        </FormField>
 
-        <Section title="合作方式" error={state.fieldErrors?.workMode?.[0]} required>
+        <FormField
+          label="合作方式"
+          required
+          error={state.fieldErrors?.workMode}
+        >
           <input type="hidden" name="workMode" value={workMode} />
           <div className="grid grid-cols-2 gap-1.5">
             {COLLAB_WORK_MODE_VALUES.map((m) => {
@@ -165,9 +192,13 @@ export function CreateCollaborationForm() {
               );
             })}
           </div>
-        </Section>
+        </FormField>
 
-        <Section title="远程 / 线下" error={state.fieldErrors?.location?.[0]} required>
+        <FormField
+          label="远程 / 线下"
+          required
+          error={state.fieldErrors?.location}
+        >
           <input type="hidden" name="location" value={location} />
           <div className="grid grid-cols-3 gap-1.5">
             {COLLAB_LOCATION_VALUES.map((m) => {
@@ -189,34 +220,42 @@ export function CreateCollaborationForm() {
               );
             })}
           </div>
-        </Section>
+        </FormField>
       </div>
 
-      {/* 联系方式 */}
-      <Section title="联系方式" error={state.fieldErrors?.contact?.[0]} required>
-        <input
+      <FormField
+        label="联系方式"
+        htmlFor="contact"
+        required
+        error={state.fieldErrors?.contact}
+        hint="只对登录用户公开。建议留可主动联系到你的方式。"
+      >
+        <Input
+          id="contact"
           name="contact"
           required
           maxLength={120}
-          placeholder="微信号 / 邮箱 / 手机号 任选其一（仅登录用户可见）"
-          className="block h-10 w-full rounded-lg border border-border/60 bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+          placeholder="微信号 / 邮箱 / 手机号 任选其一"
+          aria-invalid={(state.fieldErrors?.contact?.length ?? 0) > 0 || undefined}
         />
-        <p className="mt-1 text-[11px] text-muted-foreground">
-          只对登录用户公开。建议留可主动联系到你的方式。
-        </p>
-      </Section>
+      </FormField>
 
-      {/* 标签 */}
-      <Section title="标签" error={state.fieldErrors?.tags?.[0]}>
-        <input
+      <FormField
+        label="标签"
+        htmlFor="tags"
+        hint="选填，用逗号分隔，例：短剧, Seedance 2.0, MV"
+        error={state.fieldErrors?.tags}
+      >
+        <Input
+          id="tags"
           name="tags"
           value={tagsInput}
           onChange={(e) => setTagsInput(e.target.value)}
           maxLength={200}
-          placeholder="可选，用逗号分隔，例：短剧, Seedance 2.0, MV"
-          className="block h-10 w-full rounded-lg border border-border/60 bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+          placeholder="逗号分隔"
+          aria-invalid={(state.fieldErrors?.tags?.length ?? 0) > 0 || undefined}
         />
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <span className="text-[11px] text-muted-foreground">快捷添加：</span>
           {COMMON_TAGS.map((t) => (
             <button
@@ -229,15 +268,11 @@ export function CreateCollaborationForm() {
             </button>
           ))}
         </div>
-      </Section>
+      </FormField>
 
-      {state.message && !state.ok && (
-        <p className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
-          {state.message}
-        </p>
-      )}
+      {state.message && !state.ok && <FormError message={state.message} />}
 
-      <div className="flex items-center justify-end gap-3 border-t border-border/40 pt-4">
+      <div className="flex flex-wrap items-center justify-end gap-3 border-t border-border/40 pt-4">
         <button
           type="reset"
           onClick={() => {
@@ -246,6 +281,7 @@ export function CreateCollaborationForm() {
             setLocation("REMOTE");
             setTagsInput("");
             setBudget("");
+            setDescLen(0);
           }}
           className="inline-flex h-10 items-center justify-center rounded-lg border border-border/60 bg-background px-4 text-sm transition-colors hover:bg-muted"
         >
@@ -254,34 +290,12 @@ export function CreateCollaborationForm() {
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
+          {pending && <Spinner className="size-4 text-primary-foreground" />}
           {pending ? "发布中…" : "发布合作需求"}
         </button>
       </div>
     </form>
-  );
-}
-
-function Section({
-  title,
-  required,
-  error,
-  children,
-}: {
-  title: string;
-  required?: boolean;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium">
-        {title}
-        {required && <span className="ml-0.5 text-destructive">*</span>}
-      </label>
-      {children}
-      {error && <p className="text-xs text-destructive">{error}</p>}
-    </div>
   );
 }

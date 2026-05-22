@@ -2,8 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, LogOut, MessageSquare, Search, Sparkles, Upload, User as UserIcon } from "lucide-react";
-import { useState } from "react";
+import {
+  Bell,
+  LogOut,
+  Menu,
+  MessageSquare,
+  Search,
+  Sparkles,
+  Upload,
+  User as UserIcon,
+  X,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/lib/auth/actions";
@@ -26,10 +36,25 @@ const NAV_ITEMS = [
 
 export function Navbar({ user }: { user: NavbarUser | null }) {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/50">
-      <div className="mx-auto flex h-14 w-full max-w-[1600px] items-center gap-4 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-14 w-full max-w-[1600px] items-center gap-3 px-3 sm:gap-4 sm:px-6 lg:px-8">
+        <button
+          type="button"
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-label="切换导航"
+          aria-expanded={mobileOpen}
+          className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden"
+        >
+          {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+        </button>
+
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <span className="flex size-7 items-center justify-center rounded-md bg-gradient-to-br from-cyan-400 to-blue-600 text-background shadow-[0_0_18px_-2px_rgba(56,189,248,0.5)]">
             <Sparkles className="size-4" />
@@ -94,6 +119,7 @@ export function Navbar({ user }: { user: NavbarUser | null }) {
             size="icon-sm"
             nativeButton={false}
             aria-label="通知"
+            className="hidden sm:inline-flex"
           >
             <Bell className="size-4" />
           </Button>
@@ -102,6 +128,7 @@ export function Navbar({ user }: { user: NavbarUser | null }) {
             size="sm"
             nativeButton={false}
             render={<Link href="/create-work" />}
+            className="hidden sm:inline-flex"
           >
             <Upload className="size-3.5" />
             发布
@@ -122,6 +149,7 @@ export function Navbar({ user }: { user: NavbarUser | null }) {
                 size="sm"
                 nativeButton={false}
                 render={<Link href="/auth/register" />}
+                className="hidden sm:inline-flex"
               >
                 注册
               </Button>
@@ -129,6 +157,33 @@ export function Navbar({ user }: { user: NavbarUser | null }) {
           )}
         </div>
       </div>
+
+      {mobileOpen && (
+        <div className="border-t border-border/60 bg-background/95 backdrop-blur md:hidden">
+          <nav className="mx-auto flex w-full max-w-[1600px] flex-col px-3 py-2 sm:px-6">
+            {NAV_ITEMS.map((item) => {
+              const active =
+                item.href === "/"
+                  ? pathname === "/"
+                  : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors",
+                    active
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

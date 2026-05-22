@@ -59,7 +59,7 @@ export function CollaborationCard({ item }: { item: CollabCardItem }) {
     <Link
       href={`/collaboration/${item.id}`}
       className={cn(
-        "group block rounded-xl border border-border/60 bg-card/40 p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card/70",
+        "group block surface-card surface-card-hover p-4 transition-all hover:-translate-y-0.5",
         isClosed && "opacity-60 hover:opacity-80",
       )}
     >

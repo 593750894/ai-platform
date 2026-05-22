@@ -12,12 +12,14 @@ import {
 
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FilterChip, StatusChip } from "@/components/ui/filter-chip";
+import { StatCard } from "@/components/ui/stat-card";
 import {
   CollaborationCard,
   type CollabCardItem,
 } from "@/components/feed/collaboration-card";
 import { prisma } from "@/lib/db";
-import { cn } from "@/lib/utils";
 import {
   COLLAB_CATEGORY_ORDER,
   COLLAB_STATUS_LABEL,
@@ -146,7 +148,7 @@ export default async function CollaborationPage({
     <div className="flex flex-1 flex-col">
       <PageHeader
         eyebrow="项目合作"
-        title="Collaboration · 找团队 · 接项目"
+        title="Collaboration · 项目市场"
         description="发布合作需求、组队接单、找认证创作者。从 AI 短剧到数字人、从 ComfyUI 搭建到联合创始人。"
         actions={
           <>
@@ -171,35 +173,35 @@ export default async function CollaborationPage({
         }
       />
 
-      <div className="space-y-5 px-6 py-6 sm:px-8">
-        {/* 顶部统计 */}
-        <section className="grid gap-3 sm:grid-cols-4">
-          {[
-            { label: "开放中需求", value: stats.openCount, icon: Briefcase, tone: "text-emerald-300" },
-            { label: "本周新发布", value: stats.weekCount, icon: Clock, tone: "text-cyan-300" },
-            { label: "累计合作", value: stats.totalCount, icon: Handshake, tone: "text-fuchsia-300" },
-            { label: "平台创作者", value: stats.creatorCount, icon: UserPlus, tone: "text-amber-300" },
-          ].map((s) => {
-            const Icon = s.icon;
-            return (
-              <div
-                key={s.label}
-                className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/40 p-4"
-              >
-                <span className={cn("flex size-9 items-center justify-center rounded-lg bg-primary/10", s.tone)}>
-                  <Icon className="size-4" />
-                </span>
-                <div>
-                  <div className="text-[11px] text-muted-foreground">{s.label}</div>
-                  <div className="text-lg font-semibold tabular-nums">{s.value}</div>
-                </div>
-              </div>
-            );
-          })}
+      <div className="space-y-5 px-4 py-5 sm:px-8 sm:py-6">
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="开放中需求"
+            value={stats.openCount}
+            icon={Briefcase}
+            tone="text-emerald-300"
+          />
+          <StatCard
+            label="本周新发布"
+            value={stats.weekCount}
+            icon={Clock}
+            tone="text-cyan-300"
+          />
+          <StatCard
+            label="累计合作"
+            value={stats.totalCount}
+            icon={Handshake}
+            tone="text-fuchsia-300"
+          />
+          <StatCard
+            label="平台创作者"
+            value={stats.creatorCount}
+            icon={UserPlus}
+            tone="text-amber-300"
+          />
         </section>
 
-        {/* 分类筛选 */}
-        <section className="rounded-xl border border-border/60 bg-card/40 p-4">
+        <section className="surface-card p-4">
           <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             <Filter className="size-3.5" />
             合作类型
@@ -207,8 +209,8 @@ export default async function CollaborationPage({
               · 共 {stats.totalCount} 个合作机会
             </span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <CategoryChip
+          <div className="-mx-1 flex flex-nowrap gap-2 overflow-x-auto px-1 scroll-x-snap sm:flex-wrap sm:overflow-visible">
+            <FilterChip
               href={queryWithCategory(null)}
               active={!activeCategory}
               label="全部"
@@ -219,7 +221,7 @@ export default async function CollaborationPage({
             {COLLAB_CATEGORY_ORDER.map((c) => {
               const meta = collabCategoryMeta(c);
               return (
-                <CategoryChip
+                <FilterChip
                   key={c}
                   href={queryWithCategory(c)}
                   active={activeCategory === c}
@@ -233,7 +235,6 @@ export default async function CollaborationPage({
           </div>
         </section>
 
-        {/* 状态过滤 + 排序 */}
         <section className="flex flex-wrap items-center justify-between gap-3">
           <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
             <ShieldCheck className="size-4 text-primary" />
@@ -255,8 +256,13 @@ export default async function CollaborationPage({
               </>
             )}
           </div>
-          <div className="flex flex-wrap gap-1.5 text-xs">
-            <StatusChip href={queryWithStatus(null)} active={!activeStatus} label="全部状态" tone="bg-muted/50 text-foreground" />
+          <div className="-mx-1 flex flex-nowrap gap-1.5 overflow-x-auto px-1 text-xs scroll-x-snap sm:flex-wrap sm:overflow-visible">
+            <StatusChip
+              href={queryWithStatus(null)}
+              active={!activeStatus}
+              label="全部状态"
+              tone="bg-muted/50 text-foreground"
+            />
             {COLLAB_STATUS_VALUES.map((s) => (
               <StatusChip
                 key={s}
@@ -270,7 +276,29 @@ export default async function CollaborationPage({
         </section>
 
         {items.length === 0 ? (
-          <EmptyState hasFilter={!!(activeCategory || activeStatus)} />
+          <EmptyState
+            icon={Handshake}
+            title={
+              activeCategory || activeStatus
+                ? "当前筛选下没有合作需求"
+                : "合作板块还没有任何需求"
+            }
+            description={
+              activeCategory || activeStatus
+                ? "换一个分类或状态，或者第一个发布需求。"
+                : "成为第一个发布合作需求的创作者，组队完成你的项目。"
+            }
+            action={
+              <Button
+                size="sm"
+                nativeButton={false}
+                render={<Link href="/collaboration/new" />}
+              >
+                <Plus className="size-3.5" />
+                发布合作
+              </Button>
+            }
+          />
         ) : (
           <section className="grid gap-3 lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
             {items.map((item) => (
@@ -279,8 +307,7 @@ export default async function CollaborationPage({
           </section>
         )}
 
-        {/* 提示 / 引导 */}
-        <section className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-5 text-center">
+        <section className="surface-dashed p-5 text-center">
           <p className="text-sm text-muted-foreground">
             没有找到合适的合作？
             <Link
@@ -292,99 +319,6 @@ export default async function CollaborationPage({
             </Link>
           </p>
         </section>
-      </div>
-    </div>
-  );
-}
-
-function CategoryChip({
-  href,
-  active,
-  label,
-  emoji,
-  count,
-  tone,
-}: {
-  href: string;
-  active: boolean;
-  label: string;
-  emoji: string;
-  count: number;
-  tone: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors",
-        active
-          ? `${tone} ring-1 ring-primary/40`
-          : "border-border/60 bg-card/40 text-muted-foreground hover:border-primary/30 hover:text-foreground",
-      )}
-    >
-      <span aria-hidden>{emoji}</span>
-      <span>{label}</span>
-      <span
-        className={cn(
-          "rounded-full px-1.5 text-[10px] tabular-nums",
-          active ? "bg-white/10" : "bg-muted/60",
-        )}
-      >
-        {count}
-      </span>
-    </Link>
-  );
-}
-
-function StatusChip({
-  href,
-  active,
-  label,
-  tone,
-}: {
-  href: string;
-  active: boolean;
-  label: string;
-  tone: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "inline-flex items-center rounded-md border px-2.5 py-1 transition-colors",
-        active
-          ? `${tone} border-current/40 ring-1 ring-primary/20`
-          : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground",
-      )}
-    >
-      {label}
-    </Link>
-  );
-}
-
-function EmptyState({ hasFilter }: { hasFilter: boolean }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-10 text-center">
-      <p className="text-sm text-muted-foreground">
-        {hasFilter
-          ? "当前筛选条件下还没有合作需求。换一个分类，或者第一个发布吧。"
-          : "合作板块还没有任何需求，欢迎发布第一条。"}
-      </p>
-      <div className="mt-4 inline-flex gap-2">
-        {hasFilter && (
-          <Button
-            variant="outline"
-            size="sm"
-            nativeButton={false}
-            render={<Link href="/collaboration" />}
-          >
-            清除筛选
-          </Button>
-        )}
-        <Button size="sm" nativeButton={false} render={<Link href="/collaboration/new" />}>
-          <Plus className="size-3.5" />
-          发布合作
-        </Button>
       </div>
     </div>
   );

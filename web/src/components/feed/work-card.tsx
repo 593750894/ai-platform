@@ -79,7 +79,7 @@ export function WorkCard({
         : 0;
   const bookmarkCount = work.bookmarkCount ?? 0;
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-card/70 via-card/40 to-card/20 shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset] transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-[0_12px_40px_-12px_rgba(56,189,248,0.45)]">
+    <div className="group surface-glass relative overflow-hidden border-primary/20 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-[0_12px_40px_-12px_rgba(56,189,248,0.45)]">
       {/* 卡片视觉与普通帖子区分：双层光晕 + 顶部强渐变 + 角标 */}
       <Link
         href={`/showcase/${work.id}`}
