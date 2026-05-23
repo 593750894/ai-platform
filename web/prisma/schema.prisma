@@ -182,6 +182,7 @@ model Post {
   views        Int      @default(0)
   likeCount    Int      @default(0) @map("like_count")
   commentCount Int      @default(0) @map("comment_count")
+  bookmarkCount Int     @default(0) @map("bookmark_count")
   pinned       Boolean  @default(false)
   locked       Boolean  @default(false)
   createdAt    DateTime @default(now()) @map("created_at")
