@@ -67,7 +67,8 @@
       "PowerShell($user = [Environment]::GetEnvironmentVariable\\('ELECTRON_RUN_AS_NODE', 'User'\\); $machine = [Environment]::GetEnvironmentVariable\\('ELECTRON_RUN_AS_NODE', 'Machine'\\); Write-Output \"User scope:    [$user]\"; Write-Output \"Machine scope: [$machine]\")",
       "PowerShell(Get-CimInstance Win32_Process -Filter \"Name='electron.exe' OR Name='node.exe'\" | Where-Object { $_.CommandLine -match 'seedland|SeedLandV' } | Select-Object ProcessId, ParentProcessId, Name, CommandLine | Format-List)",
       "PowerShell(Get-CimInstance Win32_Process -Filter \"Name='electron.exe'\")",
-      "PowerShell(Stop-Process -Force)"
+      "PowerShell(Stop-Process -Force)",
+      "Bash(git push origin HEAD:main)"
     ]
   }
 }
