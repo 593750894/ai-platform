@@ -57,3 +57,7 @@ export const CreateToolSchema = z.object({
 });
 
 export type CreateToolInput = z.infer<typeof CreateToolSchema>;
+
+export const UpdateToolSchema = CreateToolSchema.partial();
+
+export type UpdateToolInput = z.infer<typeof UpdateToolSchema>;
