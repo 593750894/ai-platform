@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.auth.routes import router as auth_router
 from app.routes.tasks import router as tasks_router
 from app.routes.tenants import router as tenants_router
+from app.routes.users import router as users_router
 
 
 @asynccontextmanager
@@ -30,6 +31,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(users_router)
 app.include_router(tenants_router)
 app.include_router(tasks_router)
 

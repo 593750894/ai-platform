@@ -10,8 +10,8 @@ from app.auth.schemas import (
     RefreshRequest,
     RegisterRequest,
     TokenResponse,
-    UserOut,
 )
+from app.schemas.users import UserProfileOut
 from app.auth.security import (
     TokenError,
     decode_token,
@@ -77,6 +77,19 @@ async def refresh(req: RefreshRequest, session: AsyncSession = Depends(get_sessi
     return _token_response(user)
 
 
-@router.get("/me", response_model=UserOut)
-async def me(user: User = Depends(get_current_user)) -> UserOut:
-    return UserOut(id=user.id, email=user.email, tenant_id=user.tenant_id)
+@router.get("/me", response_model=UserProfileOut)
+async def me(user: User = Depends(get_current_user)) -> UserProfileOut:
+    return UserProfileOut(
+        id=user.id,
+        email=user.email,
+        tenant_id=user.tenant_id,
+        name=user.name,
+        avatar_url=user.avatar_url,
+        bio=user.bio,
+        role=user.role,
+        skills=user.skills,
+        tools=user.tools,
+        portfolio_url=user.portfolio_url,
+        contact_info=user.contact_info,
+        created_at=user.created_at,
+    )
