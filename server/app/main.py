@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth.routes import router as auth_router
+from app.routes.collaborations import router as collaborations_router
 from app.routes.tasks import router as tasks_router
 from app.routes.tenants import router as tenants_router
 from app.routes.users import router as users_router
@@ -34,6 +35,7 @@ app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(tenants_router)
 app.include_router(tasks_router)
+app.include_router(collaborations_router)
 
 
 @app.get("/healthz", tags=["meta"])
