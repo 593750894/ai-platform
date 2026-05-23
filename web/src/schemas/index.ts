@@ -39,3 +39,10 @@ export {
   CreateCommentSchema,
   type CreateCommentInput,
 } from "@/lib/comments/schemas";
+
+export {
+  RegisterApiSchema,
+  LoginApiSchema,
+  type RegisterApiInput,
+  type LoginApiInput,
+} from "@/schemas/auth.schema";

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { getCurrentUser, getSession, type CurrentUser } from "@/lib/auth/session";
+import { UnauthorizedError } from "@/lib/errors";
 
 export async function requireUser(redirectTo: string): Promise<CurrentUser> {
   const user = await getCurrentUser();
@@ -40,4 +41,10 @@ export async function requireAdmin(
 export async function isAdmin(): Promise<boolean> {
   const user = await getCurrentUser();
   return user?.role === "ADMIN";
+}
+
+export async function requireAuth(): Promise<CurrentUser> {
+  const user = await getCurrentUser();
+  if (!user) throw new UnauthorizedError();
+  return user;
 }
