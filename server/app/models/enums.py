@@ -42,3 +42,21 @@ class AssetKind(StrEnum):
 class AssetSource(StrEnum):
     URL = "url"
     UPLOAD = "upload"
+
+
+class CollaborationStatus(StrEnum):
+    OPEN = "open"
+    MATCHED = "matched"
+    CLOSED = "closed"
+
+
+class CollaborationType(StrEnum):
+    AI_VIDEO_TEAM = "ai-video-team"
+    AI_COMIC_CREATOR = "ai-comic-creator"
+    AI_SHORT_DRAMA = "ai-short-drama"
+    DIGITAL_HUMAN = "digital-human"
+    PROMPT_ENGINEER = "prompt-engineer"
+    COMFYUI_WORKFLOW = "comfyui-workflow"
+    VIDEO_EDITOR = "video-editor"
+    CO_FOUNDER = "co-founder"
+    INVESTMENT_BIZ = "investment-biz"
