@@ -20,6 +20,7 @@ export interface PaginatedData<T> {
   total: number;
   page: number;
   pageSize: number;
+  totalPages: number;
   hasMore: boolean;
 }
 

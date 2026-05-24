@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth/guard";
 import { ForbiddenError } from "@/lib/errors";
 import { success, error } from "@/lib/response";
-import type { PaginatedData } from "@/types/api";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 
 export async function GET(request: Request) {
   try {
@@ -10,8 +10,7 @@ export async function GET(request: Request) {
     if (user.role !== "ADMIN") throw new ForbiddenError();
 
     const url = new URL(request.url);
-    const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
-    const pageSize = Math.min(50, Math.max(1, Number(url.searchParams.get("pageSize")) || 20));
+    const { page, pageSize, skip } = parsePagination(url);
     const channelId = url.searchParams.get("channelId") || undefined;
     const type = url.searchParams.get("type") || undefined;
     const search = url.searchParams.get("search")?.trim() || undefined;
@@ -32,7 +31,7 @@ export async function GET(request: Request) {
       prisma.post.findMany({
         where,
         orderBy: { createdAt: "desc" },
-        skip: (page - 1) * pageSize,
+        skip,
         take: pageSize,
         include: {
           author: {
@@ -46,14 +45,7 @@ export async function GET(request: Request) {
       prisma.post.count({ where }),
     ]);
 
-    const data: PaginatedData<(typeof items)[number]> = {
-      items,
-      total,
-      page,
-      pageSize,
-      hasMore: page * pageSize < total,
-    };
-    return success(data);
+    return success(paginatedResponse(items, total, page, pageSize));
   } catch (err) {
     return error(err);
   }

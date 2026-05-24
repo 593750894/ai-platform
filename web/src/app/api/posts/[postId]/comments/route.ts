@@ -3,7 +3,7 @@ import { requireAuth } from "@/lib/auth/guard";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { success, created, error } from "@/lib/response";
 import { CreateCommentBodySchema } from "@/lib/comments/schemas";
-import type { PaginatedData } from "@/types/api";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 
 export async function GET(
   request: Request,
@@ -12,11 +12,7 @@ export async function GET(
   try {
     const { postId } = await params;
     const url = new URL(request.url);
-    const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
-    const pageSize = Math.min(
-      50,
-      Math.max(1, Number(url.searchParams.get("pageSize")) || 20),
-    );
+    const { page, pageSize, skip } = parsePagination(url);
 
     const post = await prisma.post.findUnique({
       where: { id: postId },
@@ -30,7 +26,7 @@ export async function GET(
       prisma.comment.findMany({
         where,
         orderBy: { createdAt: "asc" },
-        skip: (page - 1) * pageSize,
+        skip,
         take: pageSize,
         include: {
           author: {
@@ -41,14 +37,7 @@ export async function GET(
       prisma.comment.count({ where }),
     ]);
 
-    const data: PaginatedData<(typeof items)[number]> = {
-      items,
-      total,
-      page,
-      pageSize,
-      hasMore: page * pageSize < total,
-    };
-    return success(data);
+    return success(paginatedResponse(items, total, page, pageSize));
   } catch (err) {
     return error(err);
   }
