@@ -3,29 +3,38 @@ import { requireAuth } from "@/lib/auth/guard";
 import { ValidationError } from "@/lib/errors";
 import { success, created, error } from "@/lib/response";
 import { CreateWorkSchema } from "@/lib/works/schemas";
-import type { PaginatedData } from "@/types/api";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
+import { WORK_CATEGORY_VALUES } from "@/lib/work-categories";
 
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
-    const pageSize = Math.min(50, Math.max(1, Number(url.searchParams.get("pageSize")) || 20));
+    const { page, pageSize, skip } = parsePagination(url);
     const category = url.searchParams.get("category") || undefined;
-    const tool = url.searchParams.get("tool") || undefined;
+    const toolsUsed = url.searchParams.get("toolsUsed") || url.searchParams.get("tool") || undefined;
     const authorId = url.searchParams.get("authorId") || undefined;
+    const search = url.searchParams.get("search")?.trim() || undefined;
 
-    const where = {
-      isPublic: true,
-      ...(category ? { category: category as never } : {}),
-      ...(authorId ? { authorId } : {}),
-      ...(tool ? { tools: { has: tool } } : {}),
-    };
+    const where: Record<string, unknown> = { isPublic: true };
+
+    if (category && (WORK_CATEGORY_VALUES as readonly string[]).includes(category)) {
+      where.category = category;
+    }
+    if (authorId) where.authorId = authorId;
+    if (toolsUsed) where.tools = { has: toolsUsed };
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ];
+    }
 
     const [items, total] = await Promise.all([
       prisma.work.findMany({
         where,
         orderBy: { createdAt: "desc" },
-        skip: (page - 1) * pageSize,
+        skip,
         take: pageSize,
         include: {
           author: {
@@ -36,14 +45,7 @@ export async function GET(request: Request) {
       prisma.work.count({ where }),
     ]);
 
-    const data: PaginatedData<(typeof items)[number]> = {
-      items,
-      total,
-      page,
-      pageSize,
-      hasMore: page * pageSize < total,
-    };
-    return success(data);
+    return success(paginatedResponse(items, total, page, pageSize));
   } catch (err) {
     return error(err);
   }
