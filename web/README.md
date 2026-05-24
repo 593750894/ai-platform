@@ -1,6 +1,7 @@
 # SeedLand · V — 社群 Web
 
-AI 视频创作者社群平台。Next.js 16 App Router + Prisma 7 + PostgreSQL，纯 Server Components + Server Actions，无独立 API 层。
+AI 视频创作者社群平台。Next.js 16 App Router + Prisma 7 + PostgreSQL。
+前端走 Server Components + Server Actions，后端提供完整 REST API（`/api/*`）供前端和第三方集成。
 
 ## 功能清单（MVP）
 
@@ -51,6 +52,7 @@ cp .env.example .env
 |---|---|---|
 | `DATABASE_URL` | ✅ | Postgres 连接串。本地最简：`npx prisma dev start seedlandv` 后用打印出来的 `postgres://...` |
 | `AUTH_SECRET`  | ✅ | HS256 签名密钥，建议 base64-32 字节：`node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
+| `SHADOW_DATABASE_URL` | | Prisma migrate dev 的影子数据库 URL（仅 Prisma Dev 环境需要） |
 
 ## 数据库
 
@@ -71,21 +73,21 @@ docker compose -f docker-compose.dev.yml up -d postgres
 ```bash
 npm run db:generate         # 生成 Prisma Client 到 src/generated/prisma
 npm run db:push             # 把 schema 同步到数据库（开发期；生产用 db:migrate:deploy）
-npm run seed                # 写入演示数据（8 用户 / 12 频道 / 20 帖 / 14 作品 / 10 合作 / 29 工具 …）
+npm run seed                # 写入演示数据（8 用户 / 12 频道 / 20 帖 / 10 作品 / 8 合作 / 15 工具 …）
 ```
 
-种子用户统一密码：`seedland-dev-2026`
+Seed 可重复执行（先清空再写入）。种子用户统一密码：`seedland-dev-2026`
 
 | 邮箱 | 用户名 | 角色 |
 |---|---|---|
-| neo@seedland.dev | neon_director | **ADMIN** |
-| pixel@seedland.dev | pixel_poet | MOD |
-| rui@seedland.dev | rui_film | USER |
-| lumen@seedland.dev | studio_lumen | USER |
-| mei@seedland.dev | mei_anim | USER |
-| scifi@seedland.dev | scifi_atelier | USER |
-| voyager@seedland.dev | doc_voyager | USER |
-| inkwell@seedland.dev | vfx_inkwell | USER |
+| admin@aivideohub.com | admin | **ADMIN** |
+| creator@aivideohub.com | ai_creator | MOD |
+| client@aivideohub.com | ecom_client | USER |
+| comic@seedland.dev | comic_artist | USER |
+| drama@seedland.dev | drama_director | USER |
+| avatar@seedland.dev | digital_human | USER |
+| comfy@seedland.dev | comfyui_dev | USER |
+| anim@seedland.dev | ai_animator | USER |
 
 > ⚠️ `db:push` 会按 schema 改表，必要时丢列。生产请走 `prisma migrate`：
 > ```bash
@@ -116,65 +118,102 @@ npm run dev
 | `npm run db:reset` | 重置数据库并重跑迁移 + 种子 |
 | `npm run seed` | 只跑种子脚本 |
 
+## API 路由总表
+
+完整文档见 [API.md](API.md)。**共计 54 个接口端点。**
+
+| 模块 | 端点数 | 说明 |
+|------|--------|------|
+| 认证 | 4 | 注册 / 登录 / 当前用户 / 登出 |
+| 用户 | 4 | 列表 / 我的资料 / 更新资料 / 公开资料 |
+| 频道 | 3 | 列表 / 详情 / 频道帖子 |
+| 帖子 | 7 | 列表 / 创建 / 详情 / 更新 / 删除 / 评论列表 / 发评论 |
+| 评论 | 2 | 更新 / 删除 |
+| 作品 | 5 | 列表 / 创建 / 详情 / 更新 / 删除 |
+| 合作 | 5 | 列表 / 创建 / 详情 / 更新 / 删除 |
+| 工具 | 2 | 列表 / 详情 |
+| 互动 | 3 | 点赞 / 收藏 / 状态查询 |
+| 私信 | 6 | 会话列表 / 发起 / 详情 / 已读 / 消息列表 / 发消息 |
+| 管理后台 | 16 | 统计 + 用户/帖子/作品/合作/工具 CRUD |
+| 系统 | 1 | 健康检查 |
+
 ## 项目结构
 
 ```
 web/
 ├── prisma/
-│   ├── schema.prisma          # 数据模型（User / Channel / Post / Comment / Work /
-│   │                          #            Collaboration / Tool / Like / Bookmark /
-│   │                          #            Conversation / Message）
+│   ├── schema.prisma          # 数据模型（13 张表）
+│   ├── migrations/            # 数据库迁移
 │   └── seed.ts                # 演示数据
+├── prisma.config.ts           # Prisma 配置（含 shadow DB）
 ├── src/
-│   ├── app/                   # Next.js App Router
+│   ├── app/
+│   │   ├── api/               # REST API 路由（54 个端点）
+│   │   │   ├── auth/          # 认证（register/login/me/logout）
+│   │   │   ├── users/         # 用户（列表/me/[userId]）
+│   │   │   ├── channels/      # 频道（列表/[id]/[id]/posts）
+│   │   │   ├── posts/         # 帖子（CRUD/comments）
+│   │   │   ├── comments/      # 评论（update/delete）
+│   │   │   ├── works/         # 作品（CRUD）
+│   │   │   ├── collaborations/ # 合作需求（CRUD）
+│   │   │   ├── tools/         # 工具库（list/detail）
+│   │   │   ├── likes/         # 点赞 toggle
+│   │   │   ├── bookmarks/     # 收藏 toggle
+│   │   │   ├── interactions/  # 互动状态查询
+│   │   │   ├── conversations/ # 私信（会话/消息）
+│   │   │   ├── admin/         # 管理后台（stats/users/posts/works/collabs/tools）
+│   │   │   └── health/        # 健康检查
 │   │   ├── page.tsx           # 首页
-│   │   ├── auth/              # 登录 / 注册
-│   │   ├── community/         # 频道列表 / 单频道 / 新建频道
-│   │   ├── post/[postId]/     # 帖子详情
-│   │   ├── create-post/       # 发帖
-│   │   ├── showcase/          # 作品广场 / 作品详情 / 上传
-│   │   ├── create-work/       # 发作品（与 showcase/upload 配套）
-│   │   ├── collaboration/     # 合作大厅 / 详情 / 发布
-│   │   ├── tools/             # 工具库
-│   │   ├── messages/          # 私信会话列表 + 单会话
-│   │   ├── profile/[userId]/  # 个人主页
-│   │   └── admin/             # 管理后台（users/posts/works/collaborations/tools）
-│   ├── components/
+│   │   ├── auth/              # 登录 / 注册页面
+│   │   ├── community/         # 频道列表 / 单频道
+│   │   ├── showcase/          # 作品广场
+│   │   ├── collaboration/     # 合作大厅
+│   │   ├── tools/             # 工具库页面
+│   │   ├── messages/          # 私信页面
+│   │   ├── profile/           # 个人主页
+│   │   └── admin/             # 管理后台页面
+│   ├── components/            # React 组件
 │   │   ├── ui/                # shadcn/ui 基础组件
-│   │   ├── layout/            # 顶部 + 移动端底部导航
-│   │   ├── auth/              # 登录 / 注册表单
-│   │   ├── feed/              # 帖子卡片、评论树、点赞收藏按钮
-│   │   └── admin/             # 后台表格 + 操作按钮
-│   ├── lib/
-│   │   ├── db.ts              # 共享 PrismaClient（带连接池单例）
-│   │   ├── auth/              # session.ts / actions.ts / guard.ts / password.ts / schemas.ts
-│   │   ├── posts/  works/  collaborations/  comments/
-│   │   ├── interactions/      # like / bookmark
-│   │   ├── messages/          # 1:1 私信
-│   │   ├── tools/             # 工具分类
-│   │   └── admin/             # 管理操作
-│   └── generated/prisma/      # Prisma Client（生成产物，已 gitignore）
-└── .env.example
+│   │   ├── layout/            # 导航栏
+│   │   ├── feed/              # 帖子/评论/互动卡片
+│   │   └── admin/             # 后台组件
+│   ├── lib/                   # 业务逻辑
+│   │   ├── db.ts              # PrismaClient 单例
+│   │   ├── auth/              # session / guard / password
+│   │   ├── pagination.ts      # 统一分页
+│   │   ├── response.ts        # 统一响应
+│   │   └── errors.ts          # 错误类
+│   └── generated/prisma/      # Prisma Client（生成产物）
+├── API.md                     # API 接口文档
+└── .env.example               # 环境变量模板
 ```
-
-所有写操作都走 Server Actions（`"use server"`），无独立 REST/RPC 层。表单输入用 zod 校验。
 
 ## 一遍跑通 MVP（白盒检查）
 
-阶段 13 的交付校验脚本如下，全部通过：
+阶段 15 交付校验，全部通过：
 
 ```bash
 npm install                            # ✓ 装依赖
-npx prisma dev start seedlandv         # ✓ 起本地 Postgres（打印 DATABASE_URL）
-# 把打印出的 URL 写入 .env
-npm run db:generate                    # ✓ 生成 Client
+npx prisma dev start seedlandv         # ✓ 起本地 Postgres
 npm run db:push                        # ✓ schema 同步
-npm run seed                           # ✓ 8 用户 / 20 帖 / 14 作品 / …
-npm run build                          # ✓ TS 通过、26 路由全部 ƒ (Dynamic) 编译
-npm run dev                            # ✓ Ready in <1s
-# 浏览器逐个验证：/、/auth/login、/community、/showcase、/collaboration、
-# /tools、/messages、/admin、/create-post、/create-work、所有 [id] 详情页
+npm run seed                           # ✓ 8 用户 / 12 频道 / 20 帖 / 30 评论 / 10 作品 / 8 合作 / 15 工具
+npm run seed                           # ✓ 再跑一次，验证 seed 可重复执行
+npm run dev                            # ✓ 启动开发服务器
+# API E2E 测试：40 个接口全部通过
+# 注册 → 登录 → 发帖 → 评论 → 发作品 → 发合作 →
+# 点赞 → 收藏 → 私信 → 管理后台 → 登出 全链路验证 ✓
 ```
+
+## 常见错误处理
+
+| 问题 | 原因 | 解决 |
+|------|------|------|
+| `P1001: Can't reach database` | 数据库未启动 | `npx prisma dev start seedlandv` |
+| `P1017: Server has closed the connection` | Prisma migrate dev + Prisma Dev 兼容性 | 改用 `npx prisma db push` |
+| `prepared statement already exists` | Prisma Dev 连接池复用 | 重启：`npx prisma dev stop seedlandv && npx prisma dev start seedlandv` |
+| `P3005: Database schema is not empty` | migrate deploy 在已有表的 DB 上 | 用 `db push` 或 `migrate reset` |
+| 401 Unauthorized | 未登录或 cookie 过期 | 重新调用 `/api/auth/login` |
+| 403 Forbidden | 非作者或非 ADMIN | 检查用户角色和资源归属 |
 
 ## 部署建议
 
